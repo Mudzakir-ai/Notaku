@@ -52,22 +52,39 @@ function buildEscFromTextWithEncoding(text, encoding) {
 }
 
 // server will try encoding order based on model; returns Buffer
-function buildBestEffortBuffer(text, model) {
+function buildBestEffortBuffer(text, model, preferredEncoding = null) {
   // default order
-  let order = ['cp1252', 'cp857', 'utf8'];
+  let order = ['cp1252', 'cp857', 'cp858', 'cp852', 'utf8'];
   if (model && model.toLowerCase().includes('sc03')) {
-    // SC03h-6081 heuristic: try cp857 first (some Chinese/thermal use this), then cp1252
-    order = ['cp857', 'cp1252', 'utf8'];
+    // SC03h-6081 heuristic: try cp857 / cp858 first, then others
+    order = ['cp857', 'cp858', 'cp1252', 'cp852', 'utf8'];
   }
+  // if client provided preferredEncoding, try it first
+  if (preferredEncoding && preferredEncoding !== 'auto') {
+    order = [preferredEncoding, ...order.filter(o => o !== preferredEncoding)];
+  }
+
+  console.log(`buildBestEffortBuffer: model=${model}, order=${order.join(',')}`);
+
   for (const enc of order) {
-    if (enc === 'utf8') {
-      const buf = Buffer.from(text + '\n\n\n', 'utf8');
-      return Buffer.concat([buf, Buffer.from([0x1d,0x56,0x01])]);
+    try {
+      if (enc === 'utf8') {
+        const buf = Buffer.from(text + '\n\n\n', 'utf8');
+        console.log('Using encoding utf8');
+        return Buffer.concat([buf, Buffer.from([0x1d,0x56,0x01])]);
+      } else {
+        console.log(`Attempt encoding: ${enc}`);
+        const b = buildEscFromTextWithEncoding(text, enc);
+        if (b) {
+          console.log(`Encoding ${enc} succeeded`);
+          return b;
+        }
+      }
+    } catch (e) {
+      console.warn(`Encoding ${enc} failed: ${e.message || e}`);
     }
-    const b = buildEscFromTextWithEncoding(text, enc);
-    if (b) return b;
   }
-  // fallback plain utf8
+  console.warn('All encodings failed, falling back to utf8 buffer');
   return Buffer.from(text + '\n\n\n', 'utf8');
 }
 
@@ -75,6 +92,8 @@ app.post('/print', async (req, res) => {
   try {
     const body = req.body || {};
     const model = body.model || '';
+    const preferred = body.preferred_encoding || null;
+
     if (!body.escpos_base64 && !body.text) {
       return res.status(400).json({ ok: false, message: 'Missing escpos_base64 or text in body' });
     }
@@ -87,8 +106,8 @@ app.post('/print', async (req, res) => {
         return res.status(400).json({ ok: false, message: 'Invalid base64' });
       }
     } else {
-      // build best-effort buffer based on model
-      buf = buildBestEffortBuffer(body.text, model);
+      // build best-effort buffer based on model and preferred encoding
+      buf = buildBestEffortBuffer(body.text, model, preferred);
     }
 
     const port = await ensureSerialOpen();
@@ -99,7 +118,7 @@ app.post('/print', async (req, res) => {
       });
     });
 
-    console.log(`Printed via ${PRINTER_PORT} (model=${model || 'unknown'})`);
+    console.log(`Printed via ${PRINTER_PORT} (model=${model || 'unknown'}, preferred=${preferred || 'none'})`);
     return res.json({ ok: true, message: 'Sent to printer' });
   } catch (err) {
     console.error('Print error', err);

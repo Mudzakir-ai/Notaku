@@ -21,7 +21,7 @@ h2,h3{text-align:center;margin:6px 0}
   margin-bottom:10px;
 }
 label{font-size:13px;font-weight:bold}
-input{
+input, select{
   width:100%;
   height:40px;
   padding:6px;
@@ -63,7 +63,7 @@ button{
 /* PRINT */
 @media print{
   body{background:#fff;padding:0;font-size:11px}
-  .form,button,input{display:none !important}
+  .form,button,input,select{display:none !important}
   th,td{
     border:none;
     border-bottom:1px dashed #000;
@@ -109,6 +109,18 @@ button{
              enterkeyhint="next"
              oninput="formatRupiahInput(this)">
     </div>
+  </div>
+
+  <div style="margin-top:8px;">
+    <label>Pilihan Encoding (printer SC03h-6081)</label>
+    <select id="encodingSelect">
+      <option value="auto">Auto (best-effort)</option>
+      <option value="cp857">CP857</option>
+      <option value="cp858">CP858</option>
+      <option value="cp1252">CP1252</option>
+      <option value="cp852">CP852</option>
+      <option value="utf8">UTF-8</option>
+    </select>
   </div>
 
   <button onclick="tambah()">➕ Tambah ke Tabel</button>
@@ -162,6 +174,7 @@ const tabel   = document.getElementById('tabel');
 const tf      = document.getElementById('tf');
 const grandEl = document.getElementById('grand');
 const sisaEl  = document.getElementById('sisa');
+const encodingSelect = document.getElementById('encodingSelect');
 
 /* ===== RUPIAH REALTIME ===== */
 function formatRupiahInput(el){
@@ -348,30 +361,24 @@ function buildReceiptText(){
 }
 
 /* ===== ESC/POS Builder (set font, align, code page, feeds, cut) ===== */
-function buildEscPosPayload(options = { tryCp1252: true }) {
-  // Helper: CP1252 best-effort mapping
-  function toCp1252Bytes(str){
+function buildEscPosPayload(options = { preferred: 'auto' }) {
+  // Helper: CP mappings (best-effort)
+  function toCpBytes(str, encoding) {
+    // simple CP1252/857/858/852 mapping fallback: map >0x7F to '?'
+    // For the web client, we use basic CP1252 mapping for speed; server will attempt full iconv encodings.
     const bytes = [];
     for (let i = 0; i < str.length; i++){
-      const ch = str.charCodeAt(i);
-      if (ch < 0x80){
-        bytes.push(ch);
-      } else if (ch >= 0xA0 && ch <= 0xFF){
-        bytes.push(ch);
-      } else {
-        const c = str[i];
+      const code = str.charCodeAt(i);
+      if (code < 0x80) bytes.push(code);
+      else {
+        // try some common mappings; otherwise '?'
+        const ch = str[i];
         const map = {
-          '€': 0x80, '‚': 0x82, 'ƒ': 0x83, '„': 0x84,
-          '…': 0x85, '†': 0x86, '‡': 0x87, 'ˆ': 0x88,
-          '‰': 0x89, 'Š': 0x8A, '‹': 0x8B, 'Œ': 0x8C,
-          'Ž': 0x8E, '‘': 0x91, '’': 0x92, '“': 0x93,
-          '”': 0x94, '•': 0x95, '–': 0x96, '—': 0x97,
-          '˜': 0x98, '™': 0x99, 'š': 0x9A, '›': 0x9B,
-          'œ': 0x9C, 'ž': 0x9E, 'Ÿ': 0x9F,
-          // common replacements
-          '—': 0x2D, '–': 0x2D
+          '€': 0x80, 'á': 0xA0, 'é': 0x82, 'í': 0xA1, 'ó': 0xA2, 'ú': 0xA3,
+          'ñ': 0xA4, 'Ñ': 0xA5, 'Á': 0xA6, 'É': 0x90, 'Í': 0xA7, 'Ó': 0xA8,
+          'Ú': 0xA9, '—': 0x2D, '–': 0x2D
         };
-        if (map[c]) bytes.push(map[c]);
+        if (map[ch]) bytes.push(map[ch]);
         else bytes.push(0x3F);
       }
     }
@@ -385,8 +392,10 @@ function buildEscPosPayload(options = { tryCp1252: true }) {
   const GS  = [0x1d];
 
   const init = Uint8Array.from([...ESC, 0x40]);     // ESC @
-  const setCp1252 = Uint8Array.from([...ESC, 0x74, 0x10]); // ESC t 16 (try)
-  const setCp857  = Uint8Array.from([...ESC, 0x74, 0x13]); // ESC t 19 (try)
+  const setCp1252 = Uint8Array.from([...ESC, 0x74, 0x10]); // ESC t 16
+  const setCp857  = Uint8Array.from([...ESC, 0x74, 0x13]); // ESC t 19
+  const setCp858  = Uint8Array.from([...ESC, 0x74, 0x11]); // try common variants
+  const setCp852  = Uint8Array.from([...ESC, 0x74, 0x12]);
   const alignCenter = Uint8Array.from([...ESC, 0x61, 0x01]);
   const alignLeft   = Uint8Array.from([...ESC, 0x61, 0x00]);
   const boldOn  = Uint8Array.from([...ESC, 0x45, 0x01]);
@@ -398,12 +407,12 @@ function buildEscPosPayload(options = { tryCp1252: true }) {
   const chunks = [];
   chunks.push(init);
 
-  // prefer CP1252, but include variant attempt bytes (best-effort)
-  if (options.preferred === 'cp857') {
-    chunks.push(setCp857);
-  } else {
-    chunks.push(setCp1252);
-  }
+  // select codepage command by preferred (client)
+  if (options.preferred === 'cp857') chunks.push(setCp857);
+  else if (options.preferred === 'cp858') chunks.push(setCp858);
+  else if (options.preferred === 'cp852') chunks.push(setCp852);
+  else if (options.preferred === 'cp1252') chunks.push(setCp1252);
+  // if 'auto' or 'utf8', we don't set codepage here and let server or printer default handle it
 
   chunks.push(alignCenter);
   chunks.push(boldOn);
@@ -412,10 +421,10 @@ function buildEscPosPayload(options = { tryCp1252: true }) {
   // header (center)
   for (let i = 0; i < 4; i++){
     const text = (lines[i] || '') + '\n';
-    if (options.preferred === 'utf8'){
+    if (options.preferred === 'utf8') {
       chunks.push(encoderUtf8.encode(text));
     } else {
-      chunks.push(toCp1252Bytes(text));
+      chunks.push(toCpBytes(text, options.preferred));
     }
   }
 
@@ -425,10 +434,10 @@ function buildEscPosPayload(options = { tryCp1252: true }) {
   // body
   for (let i = 4; i < lines.length; i++){
     const text = (lines[i] || '') + '\n';
-    if (options.preferred === 'utf8'){
+    if (options.preferred === 'utf8') {
       chunks.push(encoderUtf8.encode(text));
     } else {
-      chunks.push(toCp1252Bytes(text));
+      chunks.push(toCpBytes(text, options.preferred));
     }
   }
 
@@ -447,7 +456,7 @@ function buildEscPosPayload(options = { tryCp1252: true }) {
   return payload;
 }
 
-/* ===== PRINT LANGSUNG VIA WebUSB (dengan heuristik tambahan) ===== */
+/* ===== PRINT LANGSUNG VIA WebUSB (mengirim preferred encoding) ===== */
 async function printToThermalUSB(){
   try{
     if(!('usb' in navigator)){
@@ -455,17 +464,17 @@ async function printToThermalUSB(){
       return;
     }
 
+    update();
+    const preferred = encodingSelect.value || 'auto';
     const device = await navigator.usb.requestDevice({ filters: [] });
     await device.open();
 
-    // pilih configuration jika belum
     if (device.configuration === null && device.configurations && device.configurations.length) {
       await device.selectConfiguration(device.configurations[0].configurationValue);
     } else if (device.configuration === null) {
       await device.selectConfiguration(1);
     }
 
-    // cari endpoint OUT di seluruh interfaces/alt
     let iface = null;
     let endpointNumber = null;
     device.configuration.interfaces.forEach(ifc => {
@@ -482,15 +491,13 @@ async function printToThermalUSB(){
     });
 
     if(!iface || endpointNumber == null){
-      throw new Error('Tidak menemukan endpoint OUT pada device USB (printer mungkin tidak expose interface yang kompatibel dengan WebUSB).');
+      throw new Error('Tidak menemukan endpoint OUT pada device USB.');
     }
 
     await device.claimInterface(iface.interfaceNumber);
 
-    // build payload: untuk SC03h coba cp857 preference, lalu cp1252 fallback
-    const payload = buildEscPosPayload({ preferred: 'cp857' });
+    const payload = buildEscPosPayload({ preferred: preferred });
 
-    // transfer chunk (USB biasanya menerima besar, tapi beberapa memerlukan chunk kecil)
     const chunkSizeCandidates = [4096, 2048, 1024, 512, 256, 64];
     let sent = false;
     for (const chunkSize of chunkSizeCandidates){
@@ -502,10 +509,10 @@ async function printToThermalUSB(){
         sent = true;
         break;
       }catch(e){
-        // coba ukuran chunk lebih kecil
+        // try smaller chunk
       }
     }
-    if(!sent) throw new Error('Gagal mengirim data ke printer USB (semua chunk sizes gagal).');
+    if(!sent) throw new Error('Gagal mengirim data ke printer USB.');
 
     alert('Data cetak dikirim ke printer USB.');
     await device.close();
@@ -515,7 +522,7 @@ async function printToThermalUSB(){
   }
 }
 
-/* ===== PRINT VIA WebBluetooth (BLE) dengan retry chunk size kecil bila error ===== */
+/* ===== PRINT VIA WebBluetooth (BLE) ===== */
 async function printToThermalBLE(){
   try{
     if(!navigator.bluetooth){
@@ -523,6 +530,8 @@ async function printToThermalBLE(){
       return;
     }
 
+    update();
+    const preferred = encodingSelect.value || 'auto';
     const device = await navigator.bluetooth.requestDevice({
       acceptAllDevices: true,
       optionalServices: [
@@ -534,7 +543,6 @@ async function printToThermalBLE(){
 
     const server = await device.gatt.connect();
 
-    // cari characteristic writable (heuristik)
     let characteristic = null;
     const preferredServiceUUIDs = [
       '0000ffe0-0000-1000-8000-00805f9b34fb',
@@ -558,7 +566,6 @@ async function printToThermalBLE(){
     }
 
     if(!characteristic){
-      // fallback: scan all services/characteristics
       const services = await server.getPrimaryServices();
       for (const service of services){
         const chars = await service.getCharacteristics();
@@ -575,9 +582,8 @@ async function printToThermalBLE(){
 
     if(!characteristic) throw new Error('Tidak menemukan characteristic writable pada perangkat BLE ini.');
 
-    const payload = buildEscPosPayload({ preferred: 'cp857' });
+    const payload = buildEscPosPayload({ preferred: preferred });
 
-    // coba beberapa mtu/chunk size fallback
     const chunkSizes = [1000, 512, 240, 100, 20];
     let ok = false;
     for (const mtu of chunkSizes){
@@ -597,7 +603,7 @@ async function printToThermalBLE(){
         // try smaller mtu
       }
     }
-    if(!ok) throw new Error('Gagal menulis ke characteristic BLE (semua chunk sizes mencoba gagal).');
+    if(!ok) throw new Error('Gagal menulis ke characteristic BLE.');
 
     alert('Data cetak dikirim ke printer BLE.');
     try{ device.gatt.disconnect(); }catch(e){}
@@ -607,15 +613,17 @@ async function printToThermalBLE(){
   }
 }
 
-/* ===== Fallback: KIRIM KE APLIKASI LOKAL (HTTP POST) inkl. model metadata ===== */
+/* ===== Fallback: KIRIM KE APLIKASI LOKAL (HTTP POST) inkl. model metadata & preferred encoding ===== */
 async function printViaLocalApp(){
   const endpoints = [
     'http://localhost:3000/print',
     'http://127.0.0.1:3000/print'
   ];
 
+  update();
+  const preferred = encodingSelect.value || 'auto';
   const text = buildReceiptText();
-  const esc = buildEscPosPayload({ preferred: 'cp857' });
+  const esc = buildEscPosPayload({ preferred: preferred });
   const escBase64 = btoa(String.fromCharCode(...esc));
   const model = 'SC03h-6081';
 
@@ -627,6 +635,7 @@ async function printViaLocalApp(){
         headers: {'Content-Type':'application/json'},
         body: JSON.stringify({
           model,
+          preferred_encoding: preferred,
           text,
           escpos_base64: escBase64
         })
@@ -643,15 +652,12 @@ async function printViaLocalApp(){
 
 /* ===== TEST PRINT khusus SC03h dengan karakter uji ===== */
 function testPrintSC03(){
-  // Tambah satu item contoh lalu jalankan printViaLocalApp (atau langsung BLE/USB jika mau)
   if (document.querySelectorAll('#tabel tr').length <= 1){
-    // tambahkan contoh
     iBarang.value = 'Contoh: Tést—SC03h';
     iQty.value = 1;
     iHarga.value = '12000';
     tambah();
   }
-  // Tampilkan pilihan uji
   const mode = prompt('Test Print SC03h: ketik USB, BLE, atau LOCAL (default LOCAL)', 'LOCAL');
   if(!mode) return;
   const m = mode.trim().toUpperCase();
