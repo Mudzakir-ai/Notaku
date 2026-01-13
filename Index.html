@@ -135,24 +135,38 @@ td button{
 <h3>Sisa Bayar: Rp <span id="sisa">0</span></h3>
 
 <button onclick="shareWA()">📤 Share WhatsApp</button>
-<button onclick="window.print()">🖨️ Print Thermal</button>
+<button onclick="printThermal()">🖨️ Print Thermal</button>
 
 <script>
+/* ===== DOM ELEMENTS (explicit) ===== */
+const iBarang = document.getElementById('iBarang');
+const iQty    = document.getElementById('iQty');
+const iHarga  = document.getElementById('iHarga');
+const tabel   = document.getElementById('tabel');
+const tf      = document.getElementById('tf');
+const grandEl = document.getElementById('grand');
+const sisaEl  = document.getElementById('sisa');
+
 /* ===== RUPIAH REALTIME ===== */
 function formatRupiahInput(el){
   let v = el.value.replace(/[^0-9]/g,'');
   el.value = v ? Number(v).toLocaleString('id-ID') : '';
 }
 function getNumber(el){
-  return Number(el.value.replace(/\./g,'')) || 0;
+  // Accept element, string, or number
+  if (el == null) return 0;
+  if (typeof el === 'number') return el;
+  if (typeof el === 'string') return Number(el.replace(/\./g,'')) || 0;
+  if (el.value != null) return Number(String(el.value).replace(/\./g,'')) || 0;
+  return 0;
 }
 function rupiah(n){
-  return n.toLocaleString('id-ID');
+  return Number(n).toLocaleString('id-ID');
 }
 
 /* ===== TAMBAH BARANG ===== */
 function tambah(){
-  const barang = iBarang.value;
+  const barang = iBarang.value.trim();
   const qty    = Number(iQty.value) || 0;
   const harga  = getNumber(iHarga);
 
@@ -191,15 +205,16 @@ function editBaris(btn){
   const qty    = prompt('Qty', tr.children[2].innerText);
   const harga  = prompt('Harga', tr.children[3].innerText.replace(/\./g,''));
 
-  if(barang && qty && harga){
-    const q = Number(qty);
-    const h = Number(harga);
-    tr.children[1].innerText = barang;
-    tr.children[2].innerText = q;
-    tr.children[3].innerText = rupiah(h);
-    tr.children[4].innerText = rupiah(q*h);
-    update();
-  }
+  // allow empty string to cancel
+  if(barang == null || qty == null || harga == null) return;
+
+  const q = Number(qty) || 0;
+  const h = Number(String(harga).replace(/\D/g,'')) || 0;
+  tr.children[1].innerText = barang;
+  tr.children[2].innerText = q;
+  tr.children[3].innerText = rupiah(h);
+  tr.children[4].innerText = rupiah(q*h);
+  update();
 }
 function hapus(btn){
   btn.closest('tr').remove();
@@ -212,13 +227,13 @@ function update(){
   document.querySelectorAll('#tabel tr').forEach((tr,i)=>{
     if(i===0) return;
     tr.children[0].innerText = i;
-    grand += Number(tr.children[4].innerText.replace(/\./g,'')) || 0;
+    grand += Number(String(tr.children[4].innerText).replace(/\./g,'')) || 0;
   });
   grandEl.innerText = rupiah(grand);
   hitungSisa();
 }
 function hitungSisa(){
-  const grand = Number(grandEl.innerText.replace(/\./g,'')) || 0;
+  const grand = Number(String(grandEl.innerText).replace(/\./g,'')) || 0;
   const tfVal = getNumber(tf);
   sisaEl.innerText = rupiah(Math.max(0, grand - tfVal));
 }
@@ -270,12 +285,9 @@ Terima kasih 🙏`;
   window.open('https://wa.me/?text=' + encodeURIComponent(text),'_blank');
 }
 
-const grandEl = document.getElementById('grand');
-const sisaEl  = document.getElementById('sisa');
-
 /* ===== PRINT ===== */
 function printThermal(){
-  hitung();
+  update();
   window.print();
 }
 
