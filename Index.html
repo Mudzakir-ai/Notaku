@@ -85,10 +85,11 @@ td button{
 <body>
 
 <h2>📒 ZALTA GIFT</h2>
-<div style="text-align:center;font-size:12px;">
-  Barahan RT 05 RW 02 Tarub<br>
-  Tawangharjo, Grobogan<br>
-  HP / WA: 08816575574 / 081476698677
+<div style="text-align:center;font-size:11px;margin-bottom:4px;">
+  <div><strong>Barahan RT 05 RW 02 Tarub</strong></div>
+  <div><strong>Tawangharjo, Grobogan</strong></div>
+  <div>HP / WA: 08816575574 / 081476698677</div>
+  <div id="datetime"></div>
 </div>
 
 <!-- FORM INPUT -->
@@ -239,7 +240,7 @@ function shareWA(){
   });
   
   let text =
-`ZALTA GIFT
+`📒 *ZALTA GIFT*
 Barahan RT 05 RW 02 Tarub
 Tawangharjo, Grobogan
 HP/WA: 08816575574 / 081476698677
@@ -261,7 +262,7 @@ ${tanggal}  ${jam}
   text +=
 `-----------------------
 Total : Rp ${grandEl.innerText}
-TF    : Rp ${rupiah(getNumber(tf))}
+TF     : Rp ${rupiah(getNumber(tf))}
 Sisa  : Rp ${sisaEl.innerText}
 
 Terima kasih 🙏`;
@@ -271,6 +272,20 @@ Terima kasih 🙏`;
 
 const grandEl = document.getElementById('grand');
 const sisaEl  = document.getElementById('sisa');
+
+/* ===== PRINT ===== */
+function printThermal(){
+  hitung();
+  window.print();
+}
+
+/* ===== TANGGAL ===== */
+function updateDateTime(){
+  const now = new Date();
+  document.getElementById('datetime').innerText =
+    now.toLocaleDateString('id-ID') + ' ' + now.toLocaleTimeString('id-ID');
+}
+setInterval(updateDateTime,1000);
 </script>
 
 </body>
