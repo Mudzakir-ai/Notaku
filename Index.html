@@ -111,18 +111,6 @@ button{
     </div>
   </div>
 
-  <div style="margin-top:8px;">
-    <label>Pilihan Encoding (printer SC03h-6081)</label>
-    <select id="encodingSelect">
-      <option value="auto">Auto (best-effort)</option>
-      <option value="cp857">CP857</option>
-      <option value="cp858">CP858</option>
-      <option value="cp1252">CP1252</option>
-      <option value="cp852">CP852</option>
-      <option value="utf8">UTF-8</option>
-    </select>
-  </div>
-
   <button onclick="tambah()">➕ Tambah ke Tabel</button>
 </div>
 
@@ -149,20 +137,12 @@ button{
 
 <div class="controls" style="margin-top:8px;">
   <button onclick="shareWA()" class="small">📤 Share WhatsApp</button>
-  <button onclick="printThermal()" class="small">🖨️ Print Preview</button>
   <button onclick="printToThermalUSB()" class="small">🖨️ Cetak USB</button>
   <button onclick="printToThermalBLE()" class="small">🖨️ Cetak BLE</button>
-  <button onclick="printViaLocalApp()" class="small">🖨️ Cetak via Aplikasi Lokal</button>
   <button onclick="exportPDF()" class="small">📄 Export PDF</button>
-  <button onclick="testPrintSC03()" class="small">🔧 Test Print SC03h</button>
 </div>
 
 <div style="margin-top:8px;font-size:12px;color:#444">
-  <strong>Catatan:</strong>
-  <ul>
-    <li>WebUSB/ WebBluetooth memerlukan halaman di HTTPS atau <code>localhost</code>.</li>
-    <li>Jika printer Anda Bluetooth Classic (SPP) → gunakan fallback "Cetak via Aplikasi Lokal" dengan server yang berjalan di mesin yang terhubung ke printer.</li>
-  </ul>
 </div>
 
 <script>
@@ -318,12 +298,6 @@ Sisa  : Rp ${sisaEl.innerText}
 Terima kasih 🙏`;
 
   window.open('https://wa.me/?text=' + encodeURIComponent(text),'_blank');
-}
-
-/* ===== PRINT PREVIEW (existing) ===== */
-function printThermal(){
-  update();
-  window.print();
 }
 
 /* ===== BUILD RECEIPT TEXT (dipakai untuk USB/BLE/Local/PDF) ===== */
@@ -611,59 +585,6 @@ async function printToThermalBLE(){
     console.error(err);
     alert('Gagal cetak BLE: ' + (err.message || err));
   }
-}
-
-/* ===== Fallback: KIRIM KE APLIKASI LOKAL (HTTP POST) inkl. model metadata & preferred encoding ===== */
-async function printViaLocalApp(){
-  const endpoints = [
-    'http://localhost:3000/print',
-    'http://127.0.0.1:3000/print'
-  ];
-
-  update();
-  const preferred = encodingSelect.value || 'auto';
-  const text = buildReceiptText();
-  const esc = buildEscPosPayload({ preferred: preferred });
-  const escBase64 = btoa(String.fromCharCode(...esc));
-  const model = 'SC03h-6081';
-
-  let lastErr = null;
-  for (const url of endpoints){
-    try{
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({
-          model,
-          preferred_encoding: preferred,
-          text,
-          escpos_base64: escBase64
-        })
-      });
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      alert('Permintaan cetak dikirim ke aplikasi lokal (' + url + ').');
-      return;
-    }catch(err){
-      lastErr = err;
-    }
-  }
-  alert('Gagal menghubungi aplikasi lokal. Pastikan aplikasi listener berjalan di http://localhost:3000/print. Error: ' + (lastErr && lastErr.message));
-}
-
-/* ===== TEST PRINT khusus SC03h dengan karakter uji ===== */
-function testPrintSC03(){
-  if (document.querySelectorAll('#tabel tr').length <= 1){
-    iBarang.value = 'Contoh: Tést—SC03h';
-    iQty.value = 1;
-    iHarga.value = '12000';
-    tambah();
-  }
-  const mode = prompt('Test Print SC03h: ketik USB, BLE, atau LOCAL (default LOCAL)', 'LOCAL');
-  if(!mode) return;
-  const m = mode.trim().toUpperCase();
-  if (m === 'USB') printToThermalUSB();
-  else if (m === 'BLE') printToThermalBLE();
-  else printViaLocalApp();
 }
 
 /* ===== EXPORT PDF menggunakan jsPDF ===== */
