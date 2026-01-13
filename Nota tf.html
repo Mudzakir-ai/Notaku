@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Catatan Hitung - Zalta Gift</title>
+
+<style>
+body{
+  font-family:Arial, sans-serif;
+  background:#f5f5f5;
+  padding:10px;
+}
+h2,h3{
+  text-align:center;
+  margin:6px 0;
+}
+table{
+  width:100%;
+  border-collapse:collapse;
+  background:#fff;
+}
+th,td{
+  border:1px solid #ccc;
+  padding:6px;
+  font-size:14px;
+  text-align:center;
+}
+th{background:#eee}
+input{
+  width:100%;
+  box-sizing:border-box;
+  padding:4px;
+}
+.total{font-weight:bold;text-align:right}
+button{
+  width:100%;
+  margin-top:6px;
+  padding:10px;
+  font-size:16px;
+}
+td button{
+  width:auto;
+  padding:4px 6px;
+  font-size:12px;
+}
+
+/* ===== PRINT THERMAL ===== */
+@media print{
+  body{background:#fff;padding:0;margin:0;font-size:11px}
+  h2{font-size:14px;margin:2px 0}
+  h3{font-size:12px;margin-top:6px}
+  th,td{
+    padding:2px;
+    font-size:11px;
+    border:none;
+    border-bottom:1px dashed #000;
+  }
+  th{
+    border-top:1px dashed #000;
+    border-bottom:1px dashed #000;
+  }
+  th:last-child,
+  td:last-child,
+  input,button{
+    display:none !important;
+  }
+}
+@page{
+  size:80mm auto;
+  margin:3mm;
+}
+</style>
+</head>
+
+<body>
+
+<h2>📒 ZALTA GIFT</h2>
+<div style="text-align:center;font-size:11px;margin-bottom:4px;">
+  <div><strong>Barahan RT 05 RW 02 Tarub</strong></div>
+  <div><strong>Tawangharjo, Grobogan</strong></div>
+  <div>HP / WA: 08816575574 / 081476698677</div>
+  <div id="datetime"></div>
+</div>
+
+<table id="tabel">
+<tr>
+  <th>No</th>
+  <th>Barang</th>
+  <th>Qty</th>
+  <th>Harga</th>
+  <th>Total</th>
+  <th>Aksi</th>
+</tr>
+</table>
+
+<button onclick="tambahBaris()">➕ Tambah Baris</button>
+
+<h3>Grand Total: Rp <span id="grand">0</span></h3>
+
+<div style="margin-top:6px;">
+  <label><strong>Jumlah Transfer (TF)</strong></label>
+  <input type="number" id="jumlahTF" oninput="hitungSisa()" placeholder="Masukkan jumlah transfer">
+</div>
+
+<h3>Sisa Bayar: Rp <span id="sisa">0</span></h3>
+
+<button onclick="shareWA()">📤 Share WhatsApp</button>
+<button onclick="printThermal()">🖨️ Print</button>
+
+<script>
+function rupiah(n){
+  return n.toLocaleString('id-ID');
+}
+
+/* ===== BARIS ITEM ===== */
+function tambahBaris(){
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td class="no"></td>
+    <td><input placeholder="Nama barang"></td>
+    <td><input type="number" min="0" oninput="hitung()"></td>
+    <td><input type="number" min="0" oninput="hitung()"></td>
+    <td class="total">0</td>
+    <td><button onclick="hapusBaris(this)">❌</button></td>
+  `;
+  document.getElementById('tabel').appendChild(tr);
+  updateNomor();
+}
+
+function hapusBaris(btn){
+  btn.parentElement.parentElement.remove();
+  updateNomor();
+  hitung();
+}
+
+function updateNomor(){
+  document.querySelectorAll('#tabel tr').forEach((tr,i)=>{
+    if(i===0) return;
+    tr.querySelector('.no').innerText = i;
+  });
+}
+
+/* ===== HITUNG ===== */
+function hitung(){
+  let grand = 0;
+  document.querySelectorAll('#tabel tr').forEach((tr,i)=>{
+    if(i===0) return;
+    const qty = Number(tr.children[2].children[0].value) || 0;
+    const harga = Number(tr.children[3].children[0].value) || 0;
+    const total = qty * harga;
+    tr.children[4].innerText = rupiah(total);
+    grand += total;
+  });
+  document.getElementById('grand').innerText = rupiah(grand);
+  hitungSisa();
+}
+
+/* ===== SISA BAYAR ===== */
+function hitungSisa(){
+  const grand = Number(document.getElementById('grand').innerText.replace(/\./g,'')) || 0;
+  const tf = Number(document.getElementById('jumlahTF').value) || 0;
+  const sisa = grand - tf;
+  document.getElementById('sisa').innerText = rupiah(sisa < 0 ? 0 : sisa);
+}
+
+/* ===== SHARE WHATSAPP (HEADER LENGKAP) ===== */
+function shareWA(){
+  hitung();
+
+  const tf = Number(document.getElementById('jumlahTF').value) || 0;
+  const sisa = Number(document.getElementById('sisa').innerText.replace(/\./g,'')) || 0;
+
+  let text =
+`📒 *ZALTA GIFT*
+Barahan RT 05 RW 02 Tarub
+Tawangharjo, Grobogan
+HP/WA: 08816575574 / 081476698677
+----------------------------
+`;
+
+  document.querySelectorAll('#tabel tr').forEach((tr,i)=>{
+    if(i===0) return;
+    const barang = tr.children[1].children[0].value;
+    const qty = Number(tr.children[2].children[0].value) || 0;
+    const harga = Number(tr.children[3].children[0].value) || 0;
+    const total = tr.children[4].innerText;
+
+    if(barang && qty){
+      text += `${i}. ${barang} | ${qty} x ${rupiah(harga)} = ${total}\n`;
+    }
+  });
+
+  text +=
+`----------------------------
+Grand Total : Rp ${document.getElementById('grand').innerText}
+Jumlah TF   : Rp ${rupiah(tf)}
+Sisa Bayar  : Rp ${rupiah(sisa)}
+Terima kasih 🙏`;
+
+  window.open(
+    'https://wa.me/?text=' + encodeURIComponent(text),
+    '_blank'
+  );
+}
+
+/* ===== PRINT ===== */
+function printThermal(){
+  hitung();
+  window.print();
+}
+
+/* ===== TANGGAL ===== */
+function updateDateTime(){
+  const now = new Date();
+  document.getElementById('datetime').innerText =
+    now.toLocaleDateString('id-ID') + ' ' + now.toLocaleTimeString('id-ID');
+}
+setInterval(updateDateTime,1000);
+
+tambahBaris();
+</script>
+
+</body>
+</html>
