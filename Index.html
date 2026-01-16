@@ -134,17 +134,6 @@ button{
        oninput="formatRupiahInput(this); hitungSisa()">
 
 <h3><span id="labelSisa">Sisa</span>: Rp <span id="sisa">0</span></h3>
- Warna Hijau Kembalian Pelanggan
- Warna Hitam Pelanggan Kurang Pembayaran
-
-<div class="controls" style="margin-top:8px;">
-  <button onclick="shareWA()" class="small">📤 Share WhatsApp</button>
-  <button onclick="printToThermalUSB()" class="small">🖨️ Cetak USB</button>
-  <button onclick="printToThermalBLE()" class="small">🖨️ Cetak BLE</button>
-  <button onclick="exportPDF()" class="small">📄 Export PDF</button>
-</div>
-
-<div style="margin-top:8px;font-size:12px;color:#444">
   <style>
 body{
   font-family:Arial, sans-serif;
@@ -157,9 +146,25 @@ h2,h3{text-align:center;margin:6px 0}
 ...
 
 /* WARNA SISA / KEMBALIAN */
-.minus{color:red;font-weight:bold}
-.plus{color:green;font-weight:bold}
+.minus{
+  color:red !important;
+  font-weight:bold;
+}
+.plus{
+  color:green !important;
+  font-weight:bold;
+}
   </style>
+
+<div class="controls" style="margin-top:8px;">
+  <button onclick="shareWA()" class="small">📤 Share WhatsApp</button>
+  <button onclick="printToThermalUSB()" class="small">🖨️ Cetak USB</button>
+  <button onclick="printToThermalBLE()" class="small">🖨️ Cetak BLE</button>
+  <button onclick="exportPDF()" class="small">📄 Export PDF</button>
+</div>
+
+<div style="margin-top:8px;font-size:12px;color:#444">
+
 </div>
 
 <script>
