@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+tp<!DOCTYPE html>
 <html lang="id">
 <head>
 <meta charset="UTF-8">
@@ -242,7 +242,8 @@ function update(){
 function hitungSisa(){
   const grand = Number(String(grandEl.innerText).replace(/\./g,'')) || 0;
   const tfVal = getNumber(tf);
-  sisaEl.innerText = rupiah(Math.max(0, grand - tfVal));
+  const sisa  = grand - tfVal;
+  sisaEl.innerText = rupiah(sisa);
 }
 
 /* ===== ENTER ON HARGA ===== */
