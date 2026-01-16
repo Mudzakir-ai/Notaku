@@ -133,7 +133,7 @@ button{
        inputmode="numeric"
        oninput="formatRupiahInput(this); hitungSisa()">
 
-<h3>Sisa Bayar: Rp <span id="sisa">0</span></h3>
+<h3><span id="labelSisa">Sisa</span>: Rp <span id="sisa">0</span></h3>
 
 <div class="controls" style="margin-top:8px;">
   <button onclick="shareWA()" class="small">📤 Share WhatsApp</button>
@@ -242,8 +242,22 @@ function update(){
 function hitungSisa(){
   const grand = Number(String(grandEl.innerText).replace(/\./g,'')) || 0;
   const tfVal = getNumber(tf);
-  const sisa  = grand - tfVal;
-  sisaEl.innerText = rupiah(sisa);
+  const sisa  = tfVal - grand;
+
+  const label = document.getElementById('labelSisa');
+  sisaEl.classList.remove('minus','plus');
+
+  if(sisa < 0){
+    label.innerText = 'Kurang';
+    sisaEl.classList.add('minus');
+  }else if(sisa > 0){
+    label.innerText = 'Kembali';
+    sisaEl.classList.add('plus');
+  }else{
+    label.innerText = 'Pas';
+  }
+
+  sisaEl.innerText = rupiah(Math.abs(sisa));
 }
 
 /* ===== ENTER ON HARGA ===== */
@@ -294,7 +308,7 @@ ${tanggal}  ${jam}
 `-----------------------
 Total : Rp ${grandEl.innerText}
 TF     : Rp ${rupiah(getNumber(tf))}
-Sisa  : Rp ${sisaEl.innerText}
+${document.getElementById('labelSisa').innerText} : Rp ${sisaEl.innerText}
 
 Terima kasih 🙏`;
 
@@ -329,7 +343,7 @@ function buildReceiptText(){
   lines.push('-------------------------------');
   lines.push(`Total : Rp ${grandEl.innerText}`);
   lines.push(`TF    : Rp ${rupiah(getNumber(tf))}`);
-  lines.push(`Sisa  : Rp ${sisaEl.innerText}`);
+  lines.push(`${document.getElementById('labelSisa').innerText} : Rp ${sisaEl.innerText}`);
   lines.push('');
   lines.push('Terima kasih 🙏');
   return lines.join('\n');
