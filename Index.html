@@ -216,8 +216,25 @@ function rupiah(n){return Number(n).toLocaleString('id-ID')}
 harga.oninput=()=>harga.value=rupiah(angka(harga.value));
 tfEl.oninput=()=>{tfEl.value=rupiah(angka(tfEl.value));hitungSisa()};
 
-document.addEventListener('keydown',e=>{
-if(e.key==='Enter'){e.preventDefault();tambah()}
+let lock=false; // anti dobel
+
+// 💻 PC → Enter
+qty.addEventListener('keydown',e=>{
+  if(e.key==='Enter'){
+    e.preventDefault();
+    if(lock) return;
+    lock=true;
+    tambah();
+    setTimeout(()=>lock=false,300);
+  }
+});
+
+// 📱 HP → Done / ✓
+qty.addEventListener('change',()=>{
+  if(lock) return;
+  lock=true;
+  tambah();
+  setTimeout(()=>lock=false,300);
 });
 
 function tambah(){
