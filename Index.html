@@ -278,7 +278,6 @@ labelSisa.innerText=s<0?'Kurang':s>0?'Kembali':'Pas';
 labelSisa.className=s<0?'minus':s>0?'plus':'';
 }
 
-<script>
 function shareWA(){
   let items = '';
   [...tabel.rows].forEach((tr,i)=>{
@@ -304,7 +303,6 @@ Terima kasih 🙏`;
 
   window.open('https://wa.me/?text=' + encodeURIComponent(text));
 }
-</script>
 
 setInterval(()=>document.getElementById('datetime').innerText=new Date().toLocaleString('id-ID'),1000);
 </script>
