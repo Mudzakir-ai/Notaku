@@ -60,6 +60,10 @@ button{
 .small{width:auto;padding:6px 8px;font-size:13px}
 .controls{display:flex;gap:6px;flex-wrap:wrap}
 
+/* WARNA KURANG / KEMBALI */
+.minus{color:red !important;font-weight:bold}
+.plus{color:green !important;font-weight:bold}
+
 /* PRINT */
 @media print{
   body{background:#fff;padding:0;font-size:11px}
@@ -78,7 +82,6 @@ button{
 }
 </style>
 
-<!-- jsPDF CDN untuk export PDF -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 
@@ -92,29 +95,24 @@ button{
   <div id="datetime"></div>
 </div>
 
-<!-- FORM INPUT -->
 <div class="form">
   <label>Nama Barang</label>
-  <input id="iBarang" placeholder="Nama barang">
+  <input id="iBarang">
 
   <div class="row" style="margin-top:6px;">
     <div style="flex:1">
       <label>Qty</label>
-      <input type="number" id="iQty" inputmode="numeric">
+      <input type="number" id="iQty">
     </div>
     <div style="flex:1">
       <label>Harga</label>
-      <input type="text" id="iHarga"
-             inputmode="numeric"
-             enterkeyhint="next"
-             oninput="formatRupiahInput(this)">
+      <input type="text" id="iHarga" oninput="formatRupiahInput(this)">
     </div>
   </div>
 
   <button onclick="tambah()">➕ Tambah ke Tabel</button>
 </div>
 
-<!-- TABEL -->
 <table id="tabel">
 <tr>
   <th>No</th>
@@ -129,544 +127,108 @@ button{
 <h3>Grand Total: Rp <span id="grand">0</span></h3>
 
 <label>Jumlah Transfer (TF)</label>
-<input type="text" id="tf"
-       inputmode="numeric"
-       oninput="formatRupiahInput(this); hitungSisa()">
+<input type="text" id="tf" oninput="formatRupiahInput(this); hitungSisa()">
 
-<h3><span id="labelSisa">Sisa</span>: Rp <span id="sisa">0</span></h3>
-  /* WARNA SISA / KEMBALIAN */
-.minus{
-  color:red !important;
-  font-weight:bold;
-}
-.plus{
-  color:green !important;
-  font-weight:bold;
-}
+<h3>
+  <span id="labelSisa">Sisa</span> :
+  Rp <span id="sisa">0</span>
+</h3>
 
-<div class="controls" style="margin-top:8px;">
+<div class="controls">
   <button onclick="shareWA()" class="small">📤 Share WhatsApp</button>
-  <button onclick="printToThermalUSB()" class="small">🖨️ Cetak USB</button>
-  <button onclick="printToThermalBLE()" class="small">🖨️ Cetak BLE</button>
   <button onclick="exportPDF()" class="small">📄 Export PDF</button>
 </div>
 
-<div style="margin-top:8px;font-size:12px;color:#444">
-
-</div>
-
 <script>
-/* ===== DOM ELEMENTS (explicit) ===== */
 const iBarang = document.getElementById('iBarang');
-const iQty    = document.getElementById('iQty');
-const iHarga  = document.getElementById('iHarga');
-const tabel   = document.getElementById('tabel');
-const tf      = document.getElementById('tf');
+const iQty = document.getElementById('iQty');
+const iHarga = document.getElementById('iHarga');
+const tabel = document.getElementById('tabel');
+const tf = document.getElementById('tf');
 const grandEl = document.getElementById('grand');
-const sisaEl  = document.getElementById('sisa');
-const encodingSelect = document.getElementById('encodingSelect');
+const sisaEl = document.getElementById('sisa');
+const labelSisa = document.getElementById('labelSisa');
 
-/* ===== RUPIAH REALTIME ===== */
 function formatRupiahInput(el){
-  let v = el.value.replace(/[^0-9]/g,'');
+  let v = el.value.replace(/\D/g,'');
   el.value = v ? Number(v).toLocaleString('id-ID') : '';
 }
 function getNumber(el){
-  if (el == null) return 0;
-  if (typeof el === 'number') return el;
-  if (typeof el === 'string') return Number(el.replace(/\./g,'')) || 0;
-  if (el.value != null) return Number(String(el.value).replace(/\./g,'')) || 0;
-  return 0;
+  return Number(String(el.value).replace(/\./g,'')) || 0;
 }
 function rupiah(n){
   return Number(n).toLocaleString('id-ID');
 }
 
-/* ===== TAMBAH BARANG ===== */
 function tambah(){
   const barang = iBarang.value.trim();
-  const qty    = Number(iQty.value) || 0;
-  const harga  = getNumber(iHarga);
+  const qty = Number(iQty.value);
+  const harga = getNumber(iHarga);
+  if(!barang || qty<=0 || harga<=0) return;
 
-  if(!barang || qty<=0 || harga<=0){
-    alert('Lengkapi barang, qty, dan harga');
-    return;
-  }
-
-  const total = qty * harga;
   const tr = document.createElement('tr');
   tr.innerHTML = `
     <td></td>
     <td>${barang}</td>
     <td>${qty}</td>
     <td>${rupiah(harga)}</td>
-    <td class="total">${rupiah(total)}</td>
-    <td>
-      <button onclick="editBaris(this)">✏️</button>
-      <button onclick="hapus(this)">❌</button>
-    </td>
+    <td class="total">${rupiah(qty*harga)}</td>
+    <td><button onclick="this.closest('tr').remove();update()">❌</button></td>
   `;
   tabel.appendChild(tr);
-
-  iBarang.value='';
-  iQty.value='';
-  iHarga.value='';
-  iBarang.focus();
-
+  iBarang.value=iQty.value=iHarga.value='';
   update();
 }
 
-/* ===== EDIT & HAPUS ===== */
-function editBaris(btn){
-  const tr = btn.closest('tr');
-  const barang = prompt('Nama barang', tr.children[1].innerText);
-  const qty    = prompt('Qty', tr.children[2].innerText);
-  const harga  = prompt('Harga', tr.children[3].innerText.replace(/\./g,''));
-
-  if(barang == null || qty == null || harga == null) return;
-
-  const q = Number(qty) || 0;
-  const h = Number(String(harga).replace(/\D/g,'')) || 0;
-  tr.children[1].innerText = barang;
-  tr.children[2].innerText = q;
-  tr.children[3].innerText = rupiah(h);
-  tr.children[4].innerText = rupiah(q*h);
-  update();
-}
-function hapus(btn){
-  btn.closest('tr').remove();
-  update();
-}
-
-/* ===== HITUNG ===== */
 function update(){
-  let grand = 0;
+  let grand=0;
   document.querySelectorAll('#tabel tr').forEach((tr,i)=>{
     if(i===0) return;
-    tr.children[0].innerText = i;
-    grand += Number(String(tr.children[4].innerText).replace(/\./g,'')) || 0;
+    tr.children[0].innerText=i;
+    grand+=Number(tr.children[4].innerText.replace(/\./g,''));
   });
-  grandEl.innerText = rupiah(grand);
+  grandEl.innerText=rupiah(grand);
   hitungSisa();
 }
+
 function hitungSisa(){
-  const grand = Number(String(grandEl.innerText).replace(/\./g,'')) || 0;
-  const tfVal = getNumber(tf);
-  const sisa  = tfVal - grand;
-
-  const label = document.getElementById('labelSisa');
+  const sisa = getNumber(tf) - Number(grandEl.innerText.replace(/\./g,''));
   sisaEl.classList.remove('minus','plus');
+  labelSisa.classList.remove('minus','plus');
 
-  if(sisa < 0){
-    label.innerText = 'Kurang';
+  if(sisa<0){
+    labelSisa.innerText='Kurang';
     sisaEl.classList.add('minus');
-  }else if(sisa > 0){
-    label.innerText = 'Kembali';
+    labelSisa.classList.add('minus');
+  }else if(sisa>0){
+    labelSisa.innerText='Kembali';
     sisaEl.classList.add('plus');
+    labelSisa.classList.add('plus');
   }else{
-    label.innerText = 'Pas';
+    labelSisa.innerText='Pas';
   }
-
-  sisaEl.innerText = rupiah(Math.abs(sisa));
+  sisaEl.innerText=rupiah(Math.abs(sisa));
 }
 
-/* ===== ENTER ON HARGA ===== */
-iHarga.addEventListener('keydown', function(e){
-  if(e.key === 'Enter' || e.keyCode === 13){
-    e.preventDefault();
-    tambah();
-  }
-});
-
-/* ===== SHARE WHATSAPP SEJAJAR ===== */
-function padRight(text, length){
-  return (text + ' '.repeat(length)).substring(0, length);
-}
 function shareWA(){
-  const now = new Date();
-  const tanggal = now.toLocaleDateString('id-ID',{
-    day:'2-digit',
-    month:'short',
-    year:'numeric'
-  });
-  const jam = now.toLocaleTimeString('id-ID',{
-    hour:'2-digit',
-    minute:'2-digit'
-  });
-  
-  let text =
-`📒 *ZALTA GIFT*
-Barahan RT 05 RW 02 Tarub
-Tawangharjo, Grobogan
-HP/WA: 08816575574 / 081476698677
-${tanggal}  ${jam} 
------------------------
-`;
-
-  document.querySelectorAll('#tabel tr').forEach((tr,i)=>{
-    if(i===0) return;
-
-    const barang = tr.children[1].innerText;
-    const qty    = tr.children[2].innerText;
-    const harga  = tr.children[3].innerText;
-    const total  = tr.children[4].innerText;
-
-    text += `${i}. ${barang} | ${qty} x ${harga} = ${total}\n`;
-  });
-
-  text +=
-`-----------------------
-Total : Rp ${grandEl.innerText}
-TF     : Rp ${rupiah(getNumber(tf))}
-${document.getElementById('labelSisa').innerText} : Rp ${sisaEl.innerText}
-
-Terima kasih 🙏`;
-
-  window.open('https://wa.me/?text=' + encodeURIComponent(text),'_blank');
+  let text=`ZALTA GIFT\nTotal: Rp ${grandEl.innerText}\nTF: Rp ${rupiah(getNumber(tf))}\n${labelSisa.innerText}: Rp ${sisaEl.innerText}`;
+  window.open('https://wa.me/?text='+encodeURIComponent(text));
 }
 
-/* ===== BUILD RECEIPT TEXT (dipakai untuk USB/BLE/Local/PDF) ===== */
-function buildReceiptText(){
-  const now = new Date();
-  const tanggal = now.toLocaleDateString('id-ID',{
-    day:'2-digit', month:'short', year:'numeric'
-  });
-  const jam = now.toLocaleTimeString('id-ID',{hour:'2-digit', minute:'2-digit'});
-  let lines = [];
-  lines.push('   ZALTA GIFT');
-  lines.push('Barahan RT 05 RW 02 Tarub');
-  lines.push('Tawangharjo, Grobogan');
-  lines.push('HP/WA: 08816575574 / 081476698677');
-  lines.push(`${tanggal} ${jam}`);
-  lines.push('-------------------------------');
-
-  document.querySelectorAll('#tabel tr').forEach((tr,i)=>{
-    if(i===0) return;
-    const barang = tr.children[1].innerText;
-    const qty    = tr.children[2].innerText;
-    const harga  = tr.children[3].innerText;
-    const total  = tr.children[4].innerText;
-    lines.push(`${i}. ${barang}`);
-    lines.push(`   ${qty} x ${harga} = ${total}`);
-  });
-
-  lines.push('-------------------------------');
-  lines.push(`Total : Rp ${grandEl.innerText}`);
-  lines.push(`TF    : Rp ${rupiah(getNumber(tf))}`);
-  lines.push(`${document.getElementById('labelSisa').innerText} : Rp ${sisaEl.innerText}`);
-  lines.push('');
-  lines.push('Terima kasih 🙏');
-  return lines.join('\n');
-}
-
-/* ===== ESC/POS Builder (set font, align, code page, feeds, cut) ===== */
-function buildEscPosPayload(options = { preferred: 'auto' }) {
-  // Helper: CP mappings (best-effort)
-  function toCpBytes(str, encoding) {
-    // simple CP1252/857/858/852 mapping fallback: map >0x7F to '?'
-    // For the web client, we use basic CP1252 mapping for speed; server will attempt full iconv encodings.
-    const bytes = [];
-    for (let i = 0; i < str.length; i++){
-      const code = str.charCodeAt(i);
-      if (code < 0x80) bytes.push(code);
-      else {
-        // try some common mappings; otherwise '?'
-        const ch = str[i];
-        const map = {
-          '€': 0x80, 'á': 0xA0, 'é': 0x82, 'í': 0xA1, 'ó': 0xA2, 'ú': 0xA3,
-          'ñ': 0xA4, 'Ñ': 0xA5, 'Á': 0xA6, 'É': 0x90, 'Í': 0xA7, 'Ó': 0xA8,
-          'Ú': 0xA9, '—': 0x2D, '–': 0x2D
-        };
-        if (map[ch]) bytes.push(map[ch]);
-        else bytes.push(0x3F);
-      }
-    }
-    return Uint8Array.from(bytes);
-  }
-
-  const encoderUtf8 = new TextEncoder();
-  const lines = buildReceiptText().split('\n');
-
-  const ESC = [0x1b];
-  const GS  = [0x1d];
-
-  const init = Uint8Array.from([...ESC, 0x40]);     // ESC @
-  const setCp1252 = Uint8Array.from([...ESC, 0x74, 0x10]); // ESC t 16
-  const setCp857  = Uint8Array.from([...ESC, 0x74, 0x13]); // ESC t 19
-  const setCp858  = Uint8Array.from([...ESC, 0x74, 0x11]); // try common variants
-  const setCp852  = Uint8Array.from([...ESC, 0x74, 0x12]);
-  const alignCenter = Uint8Array.from([...ESC, 0x61, 0x01]);
-  const alignLeft   = Uint8Array.from([...ESC, 0x61, 0x00]);
-  const boldOn  = Uint8Array.from([...ESC, 0x45, 0x01]);
-  const boldOff = Uint8Array.from([...ESC, 0x45, 0x00]);
-  const fontNormal = Uint8Array.from([...GS, 0x21, 0x00]);
-  const cut = Uint8Array.from([0x1d, 0x56, 0x01]); // GS V 1
-  const lf = Uint8Array.from([0x0a]);
-
-  const chunks = [];
-  chunks.push(init);
-
-  // select codepage command by preferred (client)
-  if (options.preferred === 'cp857') chunks.push(setCp857);
-  else if (options.preferred === 'cp858') chunks.push(setCp858);
-  else if (options.preferred === 'cp852') chunks.push(setCp852);
-  else if (options.preferred === 'cp1252') chunks.push(setCp1252);
-  // if 'auto' or 'utf8', we don't set codepage here and let server or printer default handle it
-
-  chunks.push(alignCenter);
-  chunks.push(boldOn);
-  chunks.push(fontNormal);
-
-  // header (center)
-  for (let i = 0; i < 4; i++){
-    const text = (lines[i] || '') + '\n';
-    if (options.preferred === 'utf8') {
-      chunks.push(encoderUtf8.encode(text));
-    } else {
-      chunks.push(toCpBytes(text, options.preferred));
-    }
-  }
-
-  chunks.push(boldOff);
-  chunks.push(alignLeft);
-
-  // body
-  for (let i = 4; i < lines.length; i++){
-    const text = (lines[i] || '') + '\n';
-    if (options.preferred === 'utf8') {
-      chunks.push(encoderUtf8.encode(text));
-    } else {
-      chunks.push(toCpBytes(text, options.preferred));
-    }
-  }
-
-  // trailing feeds and cut
-  chunks.push(lf);
-  chunks.push(lf);
-  chunks.push(cut);
-
-  // concat
-  let totalLen = 0;
-  chunks.forEach(c => totalLen += c.length);
-  const payload = new Uint8Array(totalLen);
-  let offset = 0;
-  chunks.forEach(c => { payload.set(c, offset); offset += c.length; });
-
-  return payload;
-}
-
-/* ===== PRINT LANGSUNG VIA WebUSB (mengirim preferred encoding) ===== */
-async function printToThermalUSB(){
-  try{
-    if(!('usb' in navigator)){
-      alert('WebUSB tidak didukung di browser ini. Gunakan Chrome/Edge desktop.');
-      return;
-    }
-
-    update();
-    const preferred = encodingSelect.value || 'auto';
-    const device = await navigator.usb.requestDevice({ filters: [] });
-    await device.open();
-
-    if (device.configuration === null && device.configurations && device.configurations.length) {
-      await device.selectConfiguration(device.configurations[0].configurationValue);
-    } else if (device.configuration === null) {
-      await device.selectConfiguration(1);
-    }
-
-    let iface = null;
-    let endpointNumber = null;
-    device.configuration.interfaces.forEach(ifc => {
-      if (iface) return;
-      ifc.alternates.forEach(alt => {
-        if (endpointNumber) return;
-        alt.endpoints.forEach(ep => {
-          if (ep.direction === 'out') {
-            iface = ifc;
-            endpointNumber = ep.endpointNumber;
-          }
-        });
-      });
-    });
-
-    if(!iface || endpointNumber == null){
-      throw new Error('Tidak menemukan endpoint OUT pada device USB.');
-    }
-
-    await device.claimInterface(iface.interfaceNumber);
-
-    const payload = buildEscPosPayload({ preferred: preferred });
-
-    const chunkSizeCandidates = [4096, 2048, 1024, 512, 256, 64];
-    let sent = false;
-    for (const chunkSize of chunkSizeCandidates){
-      try{
-        for (let i = 0; i < payload.length; i += chunkSize){
-          const chunk = payload.slice(i, i + chunkSize);
-          await device.transferOut(endpointNumber, chunk);
-        }
-        sent = true;
-        break;
-      }catch(e){
-        // try smaller chunk
-      }
-    }
-    if(!sent) throw new Error('Gagal mengirim data ke printer USB.');
-
-    alert('Data cetak dikirim ke printer USB.');
-    await device.close();
-  }catch(err){
-    console.error(err);
-    alert('Gagal cetak USB: ' + (err.message || err));
-  }
-}
-
-/* ===== PRINT VIA WebBluetooth (BLE) ===== */
-async function printToThermalBLE(){
-  try{
-    if(!navigator.bluetooth){
-      alert('Web Bluetooth tidak didukung di browser ini.');
-      return;
-    }
-
-    update();
-    const preferred = encodingSelect.value || 'auto';
-    const device = await navigator.bluetooth.requestDevice({
-      acceptAllDevices: true,
-      optionalServices: [
-        '0000ffe0-0000-1000-8000-00805f9b34fb',
-        '000018f0-0000-1000-8000-00805f9b34fb',
-        '00001800-0000-1000-8000-00805f9b34fb'
-      ]
-    });
-
-    const server = await device.gatt.connect();
-
-    let characteristic = null;
-    const preferredServiceUUIDs = [
-      '0000ffe0-0000-1000-8000-00805f9b34fb',
-      'FFE0',
-      '000018f0-0000-1000-8000-00805f9b34fb'
-    ];
-
-    for (const s of preferredServiceUUIDs){
-      try{
-        const service = await server.getPrimaryService(s);
-        const chars = await service.getCharacteristics();
-        for (const c of chars){
-          const props = c.properties || {};
-          if (props.write || props.writeWithoutResponse){
-            characteristic = c;
-            break;
-          }
-        }
-        if (characteristic) break;
-      }catch(e){}
-    }
-
-    if(!characteristic){
-      const services = await server.getPrimaryServices();
-      for (const service of services){
-        const chars = await service.getCharacteristics();
-        for (const c of chars){
-          const props = c.properties || {};
-          if (props.write || props.writeWithoutResponse){
-            characteristic = c;
-            break;
-          }
-        }
-        if (characteristic) break;
-      }
-    }
-
-    if(!characteristic) throw new Error('Tidak menemukan characteristic writable pada perangkat BLE ini.');
-
-    const payload = buildEscPosPayload({ preferred: preferred });
-
-    const chunkSizes = [1000, 512, 240, 100, 20];
-    let ok = false;
-    for (const mtu of chunkSizes){
-      try{
-        for (let i = 0; i < payload.length; i += mtu){
-          const chunk = payload.slice(i, i + mtu);
-          if (characteristic.properties.writeWithoutResponse){
-            await characteristic.writeValueWithoutResponse(chunk);
-          } else {
-            await characteristic.writeValue(chunk);
-          }
-          await new Promise(r => setTimeout(r, 30));
-        }
-        ok = true;
-        break;
-      }catch(e){
-        // try smaller mtu
-      }
-    }
-    if(!ok) throw new Error('Gagal menulis ke characteristic BLE.');
-
-    alert('Data cetak dikirim ke printer BLE.');
-    try{ device.gatt.disconnect(); }catch(e){}
-  }catch(err){
-    console.error(err);
-    alert('Gagal cetak BLE: ' + (err.message || err));
-  }
-}
-
-/* ===== EXPORT PDF menggunakan jsPDF ===== */
 async function exportPDF(){
-  try{
-    update();
-    const { jsPDF } = window.jspdf;
-    if(!jsPDF){
-      alert('jsPDF tidak ditemukan.');
-      return;
-    }
-
-    const widthMm = 80;
-    const doc = new jsPDF({ unit: 'mm', format: [widthMm, 200] });
-    let y = 6;
-    const lineHeight = 5;
-    doc.setFontSize(10);
-    doc.text('ZALTA GIFT', widthMm/2, y, {align:'center'}); y += lineHeight;
-    doc.setFontSize(8);
-    doc.text('Barahan RT 05 RW 02 Tarub', widthMm/2, y, {align:'center'}); y += lineHeight;
-    doc.text('Tawangharjo, Grobogan', widthMm/2, y, {align:'center'}); y += lineHeight;
-    doc.text('HP/WA: 08816575574 / 081476698677', widthMm/2, y, {align:'center'}); y += lineHeight;
-    const now = new Date();
-    const tanggal = now.toLocaleDateString('id-ID',{day:'2-digit', month:'short', year:'numeric'});
-    const jam = now.toLocaleTimeString('id-ID',{hour:'2-digit', minute:'2-digit'});
-    doc.text(`${tanggal} ${jam}`, widthMm/2, y, {align:'center'}); y += lineHeight;
-    doc.text('-------------------------------', 5, y); y += lineHeight;
-
-    document.querySelectorAll('#tabel tr').forEach((tr,i)=>{
-      if(i===0) return;
-      const barang = tr.children[1].innerText;
-      const qty    = tr.children[2].innerText;
-      const harga  = tr.children[3].innerText;
-      const total  = tr.children[4].innerText;
-      doc.text(`${i}. ${barang}`, 5, y); y += lineHeight;
-      doc.text(`${qty} x ${harga} = ${total}`, 5, y); y += lineHeight;
-    });
-
-    doc.text('-------------------------------', 5, y); y += lineHeight;
-    doc.text(`Total : Rp ${grandEl.innerText}`, 5, y); y += lineHeight;
-    doc.text(`TF    : Rp ${rupiah(getNumber(tf))}`, 5, y); y += lineHeight;
-    doc.text(`Sisa  : Rp ${sisaEl.innerText}`, 5, y); y += lineHeight;
-    doc.text('', 5, y); y += lineHeight;
-    doc.text('Terima kasih 🙏', widthMm/2, y, {align:'center'}); y += lineHeight;
-
-    doc.save('nota.pdf');
-  }catch(err){
-    console.error(err);
-    alert('Gagal export PDF: ' + (err.message || err));
-  }
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({unit:'mm',format:[80,120]});
+  let y=10;
+  doc.text('ZALTA GIFT',40,y,{align:'center'}); y+=6;
+  doc.text(`Total : Rp ${grandEl.innerText}`,5,y); y+=6;
+  doc.text(`TF    : Rp ${rupiah(getNumber(tf))}`,5,y); y+=6;
+  doc.text(`${labelSisa.innerText} : Rp ${sisaEl.innerText}`,5,y);
+  doc.save('nota.pdf');
 }
 
-/* ===== TANGGAL ===== */
 function updateDateTime(){
-  const now = new Date();
   document.getElementById('datetime').innerText =
-    now.toLocaleDateString('id-ID') + ' ' + now.toLocaleTimeString('id-ID');
+    new Date().toLocaleString('id-ID');
 }
 setInterval(updateDateTime,1000);
 </script>
