@@ -133,6 +133,31 @@ button:active{transform:scale(.97)}
   .card,.actions,.toggle,input,button{display:none!important}
 }
 @page{size:80mm auto;margin:3mm}
+
+  /* ===== LOGO APLIKASI ===== */
+.logo-app{
+  width:80px;
+  height:80px;
+  object-fit:contain;
+  display:block;
+  margin:0 auto 8px;
+  border-radius:50%;              /* BULAT */
+  background:#ffffff;
+  padding:6px;
+  box-shadow:0 3px 8px rgba(0,0,0,.18);
+  transition:0.3s;
+}
+
+/* Dark mode: logo soft */
+body.dark .logo-app{
+  background:#1e1e1e;
+  filter:brightness(1.15) contrast(1.1);
+}
+
+/* Logo tidak ikut tercetak */
+@media print{
+  .logo-app{display:none!important}
+}
 </style>
 </head>
 
@@ -140,7 +165,7 @@ button:active{transform:scale(.97)}
 <div class="container">
 
 <div class="header">
-<img src="logo.png" alt="Zalta Gift">
+<img src="logo.png" alt="Zalta Gift Logo" class="logo-app">
 <h2>ZALTA GIFT</h2>
 <div style="font-size:12px">
 Barahan RT 05 RW 02 Tarub<br>
