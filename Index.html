@@ -278,23 +278,33 @@ labelSisa.innerText=s<0?'Kurang':s>0?'Kembali':'Pas';
 labelSisa.className=s<0?'minus':s>0?'plus':'';
 }
 
+<script>
 function shareWA(){
-let list='';
-[...tabel.rows].forEach((tr,i)=>{
-if(i===0) return;
-list+=`${i}. ${tr.cells[1].firstChild.value} (${tr.dataset.qty} x ${rupiah(tr.dataset.harga)}) = Rp ${tr.cells[4].innerText}\n`;
-});
-const text=`*ZALTA GIFT*
+  let items = '';
+  [...tabel.rows].forEach((tr,i)=>{
+    if(i===0) return;
+    items += `${i}. ${tr.cells[1].firstChild.value} (${tr.dataset.qty} x ${rupiah(tr.dataset.harga)}) = Rp ${tr.cells[4].innerText}\n`;
+  });
+
+  const text =
+`*ZALTA GIFT*
 Barahan RT 05 RW 02 Tarub
 Tawangharjo, Grobogan
+HP/WA: 08816575574 / 081476698677
 
-${list}
+Tanggal : ${new Date().toLocaleDateString('id-ID')}
+Jam     : ${new Date().toLocaleTimeString('id-ID')}
+--------------------------------
+${items}--------------------------------
 TOTAL : Rp ${grandEl.innerText}
+TF    : Rp ${tfEl.value || 0}
 ${labelSisa.innerText.toUpperCase()} : Rp ${sisaEl.innerText}
-
+--------------------------------
 Terima kasih 🙏`;
-window.open('https://wa.me/?text='+encodeURIComponent(text));
+
+  window.open('https://wa.me/?text=' + encodeURIComponent(text));
 }
+</script>
 
 setInterval(()=>document.getElementById('datetime').innerText=new Date().toLocaleString('id-ID'),1000);
 </script>
