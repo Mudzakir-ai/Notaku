@@ -171,7 +171,7 @@ WA: 08816575574 / 081476698677<br>
 </div>
 <div>
 <label>Harga</label>
-<input type="text" id="iHarga" placeholder="0">
+<input type="number" id="iHarga" placeholder="0">
 </div>
 </div>
 <small>⏎ ENTER untuk tambah barang</small>
@@ -216,29 +216,18 @@ function rupiah(n){return Number(n).toLocaleString('id-ID')}
 harga.oninput=()=>harga.value=rupiah(angka(harga.value));
 tfEl.oninput=()=>{tfEl.value=rupiah(angka(tfEl.value));hitungSisa()};
 
-let lastAddTime = 0;
-const DELAY = 500;
+let lastAdd = 0;
 
-function canAdd(){
+document.getElementById('formTambah').addEventListener('submit', e=>{
+  e.preventDefault();
+
   const now = Date.now();
-  if(now - lastAddTime < DELAY) return false;
-  lastAddTime = now;
-  return true;
-}
+  if(now - lastAdd < 500) return;
+  lastAdd = now;
 
-/* 💻 PC → Enter di Harga */
-harga.addEventListener('keydown', e=>{
-  if(e.key === 'Enter'){
-    e.preventDefault();
-    if(!canAdd()) return;
-    tambah();
-  }
-});
+  if(!nama.value || !qty.value || !harga.value) return;
 
-/* 📱 HP → Done / Next di Harga */
-harga.addEventListener('change', ()=>{
-  if(!canAdd()) return;
-  tambah();
+  tambah();              // ⬅️ PASTI TERPANGGIL
 });
 
 function tambah(){
