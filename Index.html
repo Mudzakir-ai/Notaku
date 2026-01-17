@@ -145,6 +145,22 @@ button:active{
   body{padding:20px}
   .container{max-width:480px}
 }
+  .btn-tambah{
+  width:100%;
+  margin-top:8px;
+  height:44px;
+  font-size:16px;
+  font-weight:bold;
+  background:var(--primary);
+  color:#fff;
+  border:none;
+  border-radius:12px;
+}
+
+.btn-tambah:active{
+  transform:scale(.97);
+  opacity:.9;
+}
 </style>
 </head>
 
@@ -160,9 +176,11 @@ WA: 08816575574 / 081476698677<br>
 <span id="datetime"></span>
 </div>
 
-<div class="card">
+<<div class="card">
+<form id="formTambah">
+
 <label>Nama Barang</label>
-<input id="iBarang" placeholder="Nama barang" autofocus>
+<input id="iBarang" placeholder="Nama barang" autofocus autocomplete="off">
 
 <div class="row" style="margin-top:6px">
 <div>
@@ -174,7 +192,12 @@ WA: 08816575574 / 081476698677<br>
 <input type="number" id="iHarga" placeholder="0">
 </div>
 </div>
-<small>⏎ ENTER untuk tambah barang</small>
+
+<button type="submit" class="btn-tambah">➕ Tambah</button>
+
+<small>Enter / Done / ➕ Tambah</small>
+
+</form>
 </div>
 
 <div class="card table-wrap">
@@ -225,7 +248,11 @@ document.getElementById('formTambah').addEventListener('submit', e=>{
   if(now - lastAdd < 500) return;
   lastAdd = now;
 
-  if(!nama.value || !qty.value || !harga.value) return;
+  const b = barang.value.trim();
+  const q = parseFloat(qty.value);
+  const h = angka(harga.value);
+
+  if(!b || !q || q <= 0 || h <= 0) return;
 
   tambah();              // ⬅️ PASTI TERPANGGIL
 });
