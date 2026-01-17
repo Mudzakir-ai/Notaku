@@ -33,6 +33,7 @@ button{width:100%;padding:10px;font-size:16px;margin-top:6px}
 
 <h2>📒 ZALTA GIFT</h2>
 <div style="text-align:center;font-size:11px">
+  <b>ZALTA GIFT</b><br>
   Barahan RT 05 RW 02 Tarub<br>
   Tawangharjo, Grobogan<br>
   HP / WA: 08816575574 / 081476698677<br>
@@ -127,8 +128,29 @@ function hitungSisa(){
 }
 
 function shareWA(){
-  const txt=`ZALTA GIFT\nTotal: Rp ${grandEl.innerText}\n${labelSisa.innerText}: Rp ${sisaEl.innerText}`;
-  window.open('https://wa.me/?text='+encodeURIComponent(txt));
+  let items='';
+  document.querySelectorAll('#tabel tr').forEach((tr,i)=>{
+    if(i===0) return;
+    items+=`${i}. ${tr.children[1].innerText} (${tr.children[2].innerText} x ${tr.children[3].innerText}) = Rp ${tr.children[4].innerText}\n`;
+  });
+
+  const text=
+`*ZALTA GIFT*
+Barahan RT 05 RW 02 Tarub
+Tawangharjo, Grobogan
+HP/WA: 08816575574 / 081476698677
+
+Tanggal : ${new Date().toLocaleDateString('id-ID')}
+Jam     : ${new Date().toLocaleTimeString('id-ID')}
+--------------------------------
+${items}--------------------------------
+TOTAL : Rp ${grandEl.innerText}
+TF    : Rp ${rupiah(angka(tfEl.value))}
+${labelSisa.innerText.toUpperCase()} : Rp ${sisaEl.innerText}
+--------------------------------
+Terima kasih 🙏`;
+
+  window.open('https://wa.me/?text='+encodeURIComponent(text));
 }
 
 ['iBarang','iQty','iHarga'].forEach(id=>{
