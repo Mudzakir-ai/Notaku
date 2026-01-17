@@ -8,20 +8,13 @@
 <style>
 *{box-sizing:border-box}
 
-/* ===== THEME VARIABLE ===== */
+/* ===== BRAND COLOR ===== */
 :root{
   --primary:#f05a7e;
   --primary-dark:#d94b6a;
-  --text:#333;
+  --secondary:#333;
   --bg:#f7f7f7;
   --card:#ffffff;
-}
-
-/* ===== DARK MODE ===== */
-body.dark{
-  --bg:#121212;
-  --card:#1e1e1e;
-  --text:#f1f1f1;
 }
 
 /* ===== BASE ===== */
@@ -30,25 +23,29 @@ body{
   background:var(--bg);
   margin:0;
   padding:10px;
-  color:var(--text);
-  transition:.3s;
+  color:var(--secondary);
 }
-.container{max-width:420px;margin:auto}
+
+.container{
+  max-width:420px;
+  margin:auto;
+}
 
 /* ===== HEADER ===== */
-.header{
-  text-align:center;
-  margin-bottom:10px;
-}
-.header img{
-  width:70px;
-  margin-bottom:4px;
-}
 h2{
-  margin:4px 0;
+  text-align:center;
+  margin:6px 0;
   color:var(--primary);
 }
-h3{text-align:center;margin:6px 0}
+h3{
+  text-align:center;
+  margin:6px 0;
+}
+.header{
+  text-align:center;
+  font-size:12px;
+  margin-bottom:10px;
+}
 
 /* ===== CARD ===== */
 .card{
@@ -60,7 +57,10 @@ h3{text-align:center;margin:6px 0}
 }
 
 /* ===== FORM ===== */
-label{font-size:13px;font-weight:bold}
+label{
+  font-size:13px;
+  font-weight:bold;
+}
 input{
   width:100%;
   height:40px;
@@ -72,16 +72,24 @@ input{
 input:focus{
   outline:none;
   border-color:var(--primary);
+  box-shadow:0 0 0 2px rgba(240,90,126,.2);
 }
 input[type=text]{text-align:right}
 input[type=number]{text-align:center}
 
-.row{display:flex;gap:6px}
+.row{
+  display:flex;
+  gap:6px;
+}
 .row>div{flex:1}
 
 /* ===== TABLE ===== */
 .table-wrap{overflow-x:auto}
-table{width:100%;border-collapse:collapse;font-size:13px}
+table{
+  width:100%;
+  border-collapse:collapse;
+  font-size:13px;
+}
 th{
   background:var(--primary);
   color:#fff;
@@ -92,7 +100,11 @@ td{
   padding:5px;
   text-align:center;
 }
-.total{font-weight:bold;text-align:right;color:var(--primary-dark)}
+.total{
+  text-align:right;
+  font-weight:bold;
+  color:var(--primary-dark);
+}
 
 /* ===== BUTTON ===== */
 .actions{
@@ -102,25 +114,18 @@ td{
 button{
   flex:1;
   height:44px;
-  font-size:14px;
+  font-size:15px;
   border:none;
   border-radius:12px;
   background:var(--primary);
   color:#fff;
   font-weight:bold;
 }
-button.secondary{background:#444}
-button:active{transform:scale(.97)}
-
-.toggle{
-  text-align:center;
-  margin-bottom:10px;
+button:last-child{
+  background:#444;
 }
-.toggle button{
-  width:auto;
-  padding:6px 14px;
-  height:auto;
-  font-size:13px;
+button:active{
+  transform:scale(.97);
 }
 
 /* ===== STATUS ===== */
@@ -129,34 +134,16 @@ button:active{transform:scale(.97)}
 
 /* ===== PRINT ===== */
 @media print{
-  body{background:#fff}
-  .card,.actions,.toggle,input,button{display:none!important}
+  body{background:#fff;padding:0}
+  .card,.actions,input,button{display:none!important}
+  .container{max-width:100%}
 }
 @page{size:80mm auto;margin:3mm}
 
-  /* ===== LOGO APLIKASI ===== */
-.logo-app{
-  width:80px;
-  height:80px;
-  object-fit:contain;
-  display:block;
-  margin:0 auto 8px;
-  border-radius:50%;              /* BULAT */
-  background:#ffffff;
-  padding:6px;
-  box-shadow:0 3px 8px rgba(0,0,0,.18);
-  transition:0.3s;
-}
-
-/* Dark mode: logo soft */
-body.dark .logo-app{
-  background:#1e1e1e;
-  filter:brightness(1.15) contrast(1.1);
-}
-
-/* Logo tidak ikut tercetak */
-@media print{
-  .logo-app{display:none!important}
+/* ===== DESKTOP ===== */
+@media(min-width:768px){
+  body{padding:20px}
+  .container{max-width:480px}
 }
 </style>
 </head>
@@ -164,19 +151,13 @@ body.dark .logo-app{
 <body>
 <div class="container">
 
+<h2>🎁 ZALTA GIFT</h2>
 <div class="header">
-<img src="logo.png" alt="Zalta Gift Logo" class="logo-app">
-<h2>ZALTA GIFT</h2>
-<div style="font-size:12px">
+<b>ZALTA GIFT</b><br>
 Barahan RT 05 RW 02 Tarub<br>
 Tawangharjo, Grobogan<br>
 WA: 08816575574 / 081476698677<br>
 <span id="datetime"></span>
-</div>
-</div>
-
-<div class="toggle">
-<button onclick="toggleMode()">🎨 Soft / Dark</button>
 </div>
 
 <div class="card">
@@ -186,11 +167,11 @@ WA: 08816575574 / 081476698677<br>
 <div class="row" style="margin-top:6px">
 <div>
 <label>Qty</label>
-<input type="number" id="iQty" step="0.01" inputmode="decimal">
+<input type="number" id="iQty" step="0.01" inputmode="decimal" placeholder="0">
 </div>
 <div>
 <label>Harga</label>
-<input type="text" id="iHarga">
+<input type="text" id="iHarga" placeholder="0">
 </div>
 </div>
 <small>⏎ ENTER untuk tambah barang</small>
@@ -214,20 +195,20 @@ WA: 08816575574 / 081476698677<br>
 
 <div class="actions">
 <button onclick="shareWA()">📤 Share WA</button>
-<button class="secondary" onclick="window.print()">🖨 Print</button>
+<button onclick="window.print()">🖨 Print</button>
 </div>
 
 </div>
 
 <script>
-const barang=iBarang;
-const qty=iQty;
-const harga=iHarga;
-const tfEl=tf;
+const barang=document.getElementById('iBarang');
+const qty=document.getElementById('iQty');
+const harga=document.getElementById('iHarga');
+const tfEl=document.getElementById('tf');
 const tabel=document.getElementById('tabel');
-const grandEl=grand;
-const sisaEl=sisa;
-const labelSisa=labelSisa;
+const grandEl=document.getElementById('grand');
+const sisaEl=document.getElementById('sisa');
+const labelSisa=document.getElementById('labelSisa');
 
 function angka(v){return Number(String(v).replace(/\D/g,''))||0}
 function rupiah(n){return Number(n).toLocaleString('id-ID')}
@@ -297,7 +278,6 @@ labelSisa.innerText=s<0?'Kurang':s>0?'Kembali':'Pas';
 labelSisa.className=s<0?'minus':s>0?'plus':'';
 }
 
-/* ===== WA TEMPLATE CANTIK ===== */
 function shareWA(){
   let items = '';
   [...tabel.rows].forEach((tr,i)=>{
@@ -324,11 +304,7 @@ Terima kasih 🙏`;
   window.open('https://wa.me/?text=' + encodeURIComponent(text));
 }
 
-function toggleMode(){
-document.body.classList.toggle('dark');
-}
-
-setInterval(()=>datetime.innerText=new Date().toLocaleString('id-ID'),1000);
+setInterval(()=>document.getElementById('datetime').innerText=new Date().toLocaleString('id-ID'),1000);
 </script>
 
 </body>
