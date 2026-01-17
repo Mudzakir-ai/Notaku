@@ -21,7 +21,7 @@ h2,h3{text-align:center;margin:6px 0}
   margin-bottom:10px;
 }
 label{font-size:13px;font-weight:bold}
-input{
+input, select{
   width:100%;
   height:40px;
   padding:6px;
@@ -57,15 +57,31 @@ button{
   font-size:16px;
   margin-top:6px;
 }
+.small{width:auto;padding:6px 8px;font-size:13px}
+.controls{display:flex;gap:6px;flex-wrap:wrap}
 
-/* WARNA KURANG / KEMBALI */
-.minus{color:red;font-weight:bold}
-.plus{color:green;font-weight:bold}
+<style>
+.minus{
+  color:red !important;
+  font-weight:bold;
+}
+.plus{
+  color:green !important;
+  font-weight:bold;
+}
+</style>
 
 /* PRINT */
 @media print{
   body{background:#fff;padding:0;font-size:11px}
-  .form,button,input{display:none}
+  .form,button,input,select{display:none !important}
+  th,td{
+    border:none;
+    border-bottom:1px dashed #000;
+    padding:2px;
+    font-size:11px;
+  }
+  th:last-child,td:last-child{display:none}
 }
 @page{
   size:80mm auto;
@@ -79,12 +95,18 @@ button{
 <body>
 
 <h2>📒 ZALTA GIFT</h2>
+<div style="text-align:center;font-size:11px;margin-bottom:4px;">
+  <div><strong>Barahan RT 05 RW 02 Tarub</strong></div>
+  <div><strong>Tawangharjo, Grobogan</strong></div>
+  <div>HP / WA: 08816575574 / 081476698677</div>
+  <div id="datetime"></div>
+</div>
 
 <div class="form">
   <label>Nama Barang</label>
   <input id="iBarang">
 
-  <div class="row" style="margin-top:6px">
+  <div class="row" style="margin-top:6px;">
     <div style="flex:1">
       <label>Qty</label>
       <input type="number" id="iQty">
@@ -95,7 +117,7 @@ button{
     </div>
   </div>
 
-  <button onclick="tambah()">➕ Tambah</button>
+  <button onclick="tambah()">➕ Tambah ke Tabel</button>
 </div>
 
 <table id="tabel">
@@ -105,10 +127,11 @@ button{
   <th>Qty</th>
   <th>Harga</th>
   <th>Total</th>
+  <th>Aksi</th>
 </tr>
 </table>
 
-<h3>Grand Total : Rp <span id="grand">0</span></h3>
+<h3>Grand Total: Rp <span id="grand">0</span></h3>
 
 <label>Jumlah Transfer (TF)</label>
 <input type="text" id="tf" oninput="formatRupiahInput(this); hitungSisa()">
@@ -118,7 +141,10 @@ button{
   Rp <span id="sisa">0</span>
 </h3>
 
-<button onclick="exportPDF()">📄 Export PDF</button>
+<div class="controls">
+  <button onclick="shareWA()" class="small">📤 Share WhatsApp</button>
+  <button onclick="exportPDF()" class="small">📄 Export PDF</button>
+</div>
 
 <script>
 const iBarang = document.getElementById('iBarang');
@@ -135,43 +161,40 @@ function formatRupiahInput(el){
   el.value = v ? Number(v).toLocaleString('id-ID') : '';
 }
 function getNumber(el){
-  return Number(el.value.replace(/\./g,'')) || 0;
+  return Number(String(el.value).replace(/\./g,'')) || 0;
 }
 function rupiah(n){
   return Number(n).toLocaleString('id-ID');
 }
 
 function tambah(){
-  const barang = iBarang.value;
+  const barang = iBarang.value.trim();
   const qty = Number(iQty.value);
   const harga = getNumber(iHarga);
   if(!barang || qty<=0 || harga<=0) return;
 
-  const total = qty * harga;
   const tr = document.createElement('tr');
   tr.innerHTML = `
     <td></td>
     <td>${barang}</td>
     <td>${qty}</td>
     <td>${rupiah(harga)}</td>
-    <td class="total">${rupiah(total)}</td>
+    <td class="total">${rupiah(qty*harga)}</td>
+    <td><button onclick="this.closest('tr').remove();update()">❌</button></td>
   `;
   tabel.appendChild(tr);
-
-  iBarang.value='';
-  iQty.value='';
-  iHarga.value='';
+  iBarang.value=iQty.value=iHarga.value='';
   update();
 }
 
 function update(){
-  let grand = 0;
+  let grand=0;
   document.querySelectorAll('#tabel tr').forEach((tr,i)=>{
     if(i===0) return;
-    tr.children[0].innerText = i;
-    grand += Number(tr.children[4].innerText.replace(/\./g,'')) || 0;
+    tr.children[0].innerText=i;
+    grand+=Number(tr.children[4].innerText.replace(/\./g,''));
   });
-  grandEl.innerText = rupiah(grand);
+  grandEl.innerText=rupiah(grand);
   hitungSisa();
 }
 
@@ -180,8 +203,9 @@ function hitungSisa(){
   const tfVal = getNumber(tf);
   const hasil = tfVal - grand;
 
-  sisaEl.className='';
-  labelSisa.className='';
+  // reset class
+  sisaEl.className = '';
+  labelSisa.className = '';
 
   if(hasil < 0){
     labelSisa.innerText = 'Kurang';
@@ -194,12 +218,18 @@ function hitungSisa(){
   }else{
     labelSisa.innerText = 'Pas';
   }
-  sisaEl.innerText = rupiah(Math.abs(hasil));
+
+  sisaEl.innerText = Math.abs(hasil).toLocaleString('id-ID');
 }
 
-function exportPDF(){
+function shareWA(){
+  let text=`ZALTA GIFT\nTotal: Rp ${grandEl.innerText}\nTF: Rp ${rupiah(getNumber(tf))}\n${labelSisa.innerText}: Rp ${sisaEl.innerText}`;
+  window.open('https://wa.me/?text='+encodeURIComponent(text));
+}
+
+async function exportPDF(){
   const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({unit:'mm',format:[80,200]});
+  const doc = new jsPDF({unit:'mm',format:[80,120]});
   let y=10;
   doc.text('ZALTA GIFT',40,y,{align:'center'}); y+=6;
   doc.text(`Total : Rp ${grandEl.innerText}`,5,y); y+=6;
@@ -207,6 +237,12 @@ function exportPDF(){
   doc.text(`${labelSisa.innerText} : Rp ${sisaEl.innerText}`,5,y);
   doc.save('nota.pdf');
 }
+
+function updateDateTime(){
+  document.getElementById('datetime').innerText =
+    new Date().toLocaleString('id-ID');
+}
+setInterval(updateDateTime,1000);
 </script>
 
 </body>
