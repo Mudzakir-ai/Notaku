@@ -6,30 +6,121 @@
 <title>Nota ZALTA GIFT</title>
 
 <style>
-body{font-family:Arial,sans-serif;background:#f5f5f5;padding:8px}
-h2,h3{text-align:center;margin:4px 0}
-.form,table{background:#fff;padding:8px;border-radius:6px}
-label{font-size:13px;font-weight:bold}
-input{width:100%;height:38px;font-size:15px;padding:5px;border:1px solid #888;border-radius:4px}
-input[type=number]{text-align:center}
+*{box-sizing:border-box}
+body{
+  font-family:Arial,sans-serif;
+  background:#f2f2f2;
+  margin:0;
+  padding:10px;
+}
+
+/* ===== CONTAINER ===== */
+.container{
+  max-width:420px;      /* HP & PC rapi */
+  margin:auto;
+}
+
+/* ===== HEADER ===== */
+h2,h3{
+  text-align:center;
+  margin:6px 0;
+}
+.header{
+  text-align:center;
+  font-size:12px;
+  margin-bottom:8px;
+}
+
+/* ===== CARD ===== */
+.card{
+  background:#fff;
+  padding:10px;
+  border-radius:8px;
+  margin-bottom:10px;
+}
+
+/* ===== FORM ===== */
+label{
+  font-size:13px;
+  font-weight:bold;
+}
+input{
+  width:100%;
+  height:40px;
+  padding:6px;
+  font-size:15px;
+  border:1px solid #999;
+  border-radius:6px;
+}
 input[type=text]{text-align:right}
-.row{display:flex;gap:6px}
-table{width:100%;border-collapse:collapse;margin-top:8px}
-th,td{border:1px solid #ccc;padding:4px;font-size:13px;text-align:center}
+input[type=number]{text-align:center}
+
+.row{
+  display:flex;
+  gap:6px;
+}
+.row > div{flex:1}
+
+/* ===== TABLE ===== */
+.table-wrap{
+  overflow-x:auto;
+}
+table{
+  width:100%;
+  border-collapse:collapse;
+  background:#fff;
+  font-size:13px;
+}
+th,td{
+  border:1px solid #ccc;
+  padding:5px;
+  text-align:center;
+}
 th{background:#eee}
 .total{text-align:right;font-weight:bold}
-.actions button{font-size:12px;padding:4px 6px}
+
+/* ===== BUTTON ===== */
+.actions{
+  display:flex;
+  gap:6px;
+}
+button{
+  flex:1;
+  height:42px;
+  font-size:14px;
+  border:none;
+  border-radius:6px;
+  background:#2d89ef;
+  color:#fff;
+}
+button:last-child{background:#444}
+button:active{opacity:.8}
+
+/* ===== STATUS ===== */
 .minus{color:red}
 .plus{color:green}
-@media print{.form,.actions,input,button{display:none!important}}
+
+/* ===== PRINT ===== */
+@media print{
+  body{background:#fff;padding:0}
+  .card,.actions,input,button{display:none!important}
+  .container{max-width:100%}
+}
 @page{size:80mm auto;margin:3mm}
+
+/* ===== DESKTOP ===== */
+@media(min-width:768px){
+  body{padding:20px}
+  .container{max-width:480px}
+}
 </style>
 </head>
 
 <body>
+<div class="container">
 
 <h2>📒 ZALTA GIFT</h2>
-<div style="text-align:center;font-size:11px">
+<div class="header">
 <b>ZALTA GIFT</b><br>
 Barahan RT 05 RW 02 Tarub<br>
 Tawangharjo, Grobogan<br>
@@ -37,14 +128,13 @@ WA: 08816575574 / 081476698677<br>
 <span id="datetime"></span>
 </div>
 
-<div class="form">
+<div class="card">
 <label>Nama Barang</label>
 <input id="iBarang" placeholder="Nama barang" autofocus>
 
 <div class="row" style="margin-top:6px">
 <div>
 <label>Qty</label>
-<!-- QTY DESIMAL AKTIF -->
 <input type="number" id="iQty" step="0.01" inputmode="decimal" placeholder="0">
 </div>
 <div>
@@ -55,22 +145,27 @@ WA: 08816575574 / 081476698677<br>
 <small>⏎ ENTER untuk tambah barang</small>
 </div>
 
+<div class="card table-wrap">
 <table id="tabel">
 <tr>
 <th>No</th><th>Barang</th><th>Qty</th><th>Harga</th><th>Total</th><th>Aksi</th>
 </tr>
 </table>
+</div>
 
 <h3>Total : Rp <span id="grand">0</span></h3>
 
+<div class="card">
 <label>Jumlah TF</label>
 <input id="tf" type="text">
-
 <h3><span id="labelSisa">Sisa</span> : Rp <span id="sisa">0</span></h3>
+</div>
 
 <div class="actions">
 <button onclick="shareWA()">📤 Share WA</button>
 <button onclick="window.print()">🖨 Print</button>
+</div>
+
 </div>
 
 <script>
@@ -86,8 +181,8 @@ const labelSisa=document.getElementById('labelSisa');
 function angka(v){return Number(String(v).replace(/\D/g,''))||0}
 function rupiah(n){return Number(n).toLocaleString('id-ID')}
 
-harga.addEventListener('input',()=>harga.value=rupiah(angka(harga.value)));
-tfEl.addEventListener('input',()=>{tfEl.value=rupiah(angka(tfEl.value));hitungSisa()});
+harga.oninput=()=>harga.value=rupiah(angka(harga.value));
+tfEl.oninput=()=>{tfEl.value=rupiah(angka(tfEl.value));hitungSisa()};
 
 document.addEventListener('keydown',e=>{
 if(e.key==='Enter'){e.preventDefault();tambah()}
@@ -95,7 +190,7 @@ if(e.key==='Enter'){e.preventDefault();tambah()}
 
 function tambah(){
 const b=barang.value.trim();
-const q=parseFloat(qty.value);   // ✅ DESIMAL
+const q=parseFloat(qty.value);
 const h=angka(harga.value);
 if(!b||!q||q<=0||h<=0) return;
 
@@ -112,10 +207,7 @@ tr.innerHTML=`
 <td><button onclick="hapus(this)">❌</button></td>
 `;
 
-tr.querySelectorAll('input').forEach(inp=>{
-inp.oninput=()=>updateRow(tr);
-});
-
+tr.querySelectorAll('input').forEach(i=>i.oninput=()=>updateRow(tr));
 tabel.appendChild(tr);
 barang.value=qty.value=harga.value='';
 barang.focus();
@@ -123,11 +215,9 @@ update();
 }
 
 function updateRow(tr){
-const q=parseFloat(tr.children[2].firstChild.value)||0; // ✅ DESIMAL
-const h=angka(tr.children[3].firstChild.value);
-tr.dataset.qty=q;
-tr.dataset.harga=h;
-tr.children[3].firstChild.value=rupiah(h);
+tr.dataset.qty=parseFloat(tr.children[2].firstChild.value)||0;
+tr.dataset.harga=angka(tr.children[3].firstChild.value);
+tr.children[3].firstChild.value=rupiah(tr.dataset.harga);
 update();
 }
 
@@ -162,22 +252,15 @@ let list='';
 if(i===0) return;
 list+=`${i}. ${tr.cells[1].firstChild.value} (${tr.dataset.qty} x ${rupiah(tr.dataset.harga)}) = Rp ${tr.cells[4].innerText}\n`;
 });
-
 const text=`*ZALTA GIFT*
 Barahan RT 05 RW 02 Tarub
 Tawangharjo, Grobogan
-WA: 08816575574 / 081476698677
 
-Tanggal: ${new Date().toLocaleDateString('id-ID')}
-Jam    : ${new Date().toLocaleTimeString('id-ID')}
--------------------------
-${list}-------------------------
+${list}
 TOTAL : Rp ${grandEl.innerText}
-TF    : Rp ${tfEl.value||0}
 ${labelSisa.innerText.toUpperCase()} : Rp ${sisaEl.innerText}
--------------------------
-Terima kasih 🙏`;
 
+Terima kasih 🙏`;
 window.open('https://wa.me/?text='+encodeURIComponent(text));
 }
 
