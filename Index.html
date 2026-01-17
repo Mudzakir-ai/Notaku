@@ -216,25 +216,29 @@ function rupiah(n){return Number(n).toLocaleString('id-ID')}
 harga.oninput=()=>harga.value=rupiah(angka(harga.value));
 tfEl.oninput=()=>{tfEl.value=rupiah(angka(tfEl.value));hitungSisa()};
 
-let lock=false; // anti dobel
+let lastAddTime = 0;
+const DELAY = 500;
 
-// 💻 PC → Enter
-qty.addEventListener('keydown',e=>{
-  if(e.key==='Enter'){
+function canAdd(){
+  const now = Date.now();
+  if(now - lastAddTime < DELAY) return false;
+  lastAddTime = now;
+  return true;
+}
+
+/* 💻 PC → Enter di Harga */
+harga.addEventListener('keydown', e=>{
+  if(e.key === 'Enter'){
     e.preventDefault();
-    if(lock) return;
-    lock=true;
+    if(!canAdd()) return;
     tambah();
-    setTimeout(()=>lock=false,300);
   }
 });
 
-// 📱 HP → Done / ✓
-qty.addEventListener('change',()=>{
-  if(lock) return;
-  lock=true;
+/* 📱 HP → Done / Next di Harga */
+harga.addEventListener('change', ()=>{
+  if(!canAdd()) return;
   tambah();
-  setTimeout(()=>lock=false,300);
 });
 
 function tambah(){
