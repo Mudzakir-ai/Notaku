@@ -134,11 +134,70 @@ button:active{
 
 /* ===== PRINT ===== */
 @media print{
-  body{background:#fff;padding:0}
-  .card,.actions,input,button{display:none!important}
-  .container{max-width:100%}
+  body{
+    background:#fff;
+    padding:0;
+    font-size:11px;
+  }
+
+  h2{
+    font-size:14px;
+    margin:2px 0;
+  }
+
+  h3{
+    font-size:12px;
+    margin:4px 0;
+  }
+
+  .header{
+    font-size:10px;
+    margin-bottom:4px;
+  }
+
+  .card,
+  .actions,
+  input,
+  button,
+  label,
+  small{
+    display:none !important;
+  }
+
+  .container{
+    max-width:100%;
+    padding:0;
+  }
+
+  table{
+    font-size:11px;
+  }
+
+  th{
+    padding:3px;
+    font-size:10px;
+  }
+
+  td{
+    padding:2px;
+    font-size:10px;
+  }
+  
+  /* sembunyikan kolom aksi */
+  th:nth-child(6),
+  td:nth-child(6){
+    display:none;
+  }
+  
+  .total{
+    font-weight:bold;
+  }
 }
-@page{size:80mm auto;margin:3mm}
+
+@page{
+  size:80mm auto;
+  margin:2mm;
+}
 
 /* ===== DESKTOP ===== */
 @media(min-width:768px){
