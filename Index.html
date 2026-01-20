@@ -121,8 +121,7 @@ button{
   color:#fff;
   font-weight:bold;
 }
-button:last-child{
-  background:#444;
+button:last-child{background:#444;
 }
 button:active{
   transform:scale(.97);
@@ -137,40 +136,23 @@ button:active{
   body{
     background:#fff;
     padding:0;
-    font-size:10px;
+    font-family:"Courier New", monospace;
+    font-size:11px;
   }
-
-  h2{font-size:14px;margin:2px 0}
-  h3{font-size:12px;margin:4px 0}
-  .header{font-size:10px;margin-bottom:4px}
-
-  /* sembunyikan semua */
-  .card,.actions,input,button,select,label{
-    display:none!important;
-  }
-
-  /* tampilkan area nota */
-  .print-area{
-    display:block!important;
-    padding:0;
-    margin:0;
-    box-shadow:none;
-  }
-
-  table{font-size:10px}
-  th,td{padding:2px;font-size:9px}
-
-  /* sembunyikan kolom aksi */
-  th:nth-child(6),
-  td:nth-child(6){
+  .card,.actions,input,button{display:none!important}
+  .container{max-width:100%}
+  table th:nth-child(1),
+  table td:nth-child(1),
+  table th:nth-child(6),
+  table td:nth-child(6){
     display:none;
   }
+  table, th, td{border:none}
+  h2{font-size:16px}
+  h3{font-size:12px}
 }
 
-@page{
-  size:var(--paper-width) auto;
-  margin:2mm;
-}
+@page{size:80mm auto;margin:3mm}
 
 /* ===== DESKTOP ===== */
 @media(min-width:768px){
@@ -251,6 +233,13 @@ WA: 08816575574 / 081476698677<br>
 <div class="actions">
 <button onclick="shareWA()">📤 Share WA</button>
 <button onclick="window.print()">🖨 Print</button>
+</div>
+  
+<div class="footer-print">
+------------------------------<br>
+Terima kasih 🙏<br>
+Barang yang sudah dibeli<br>
+tidak dapat dikembalikan
 </div>
 
 </div>
