@@ -133,38 +133,15 @@ button:active{
 
 /* ===== PRINT ===== */
 @media print{
-  body{
-    font-family: "Courier New", monospace;
-    font-size: 11px;
+  body *{
+    display:none !important;
   }
 
-  table th:nth-child(1),
-  table td:nth-child(1),
-  table th:nth-child(6),
-  table td:nth-child(6){
-    display:none;
-  }
-
-  h2{font-size:16px;margin:2px 0}
-  h3{font-size:12px;margin:4px 0}
-
-  .header{
-    font-size:10px;
-  }
-
-  table{
-    border:none;
-  }
-
-  td, th{
-    border:none;
-    padding:2px 0;
-  }
-
-  .footer-print{
-    text-align:center;
-    margin-top:8px;
-    font-size:10px;
+  #thermalText{
+    display:block !important;
+    font-family:"Courier New", monospace;
+    font-size:11px;
+    line-height:1.4;
   }
 }
 
@@ -246,7 +223,7 @@ WA: 08816575574 / 081476698677<br>
 
 <div class="actions">
 <button onclick="shareWA()">📤 Share WA</button>
-<button onclick="window.print()">🖨 Print</button>
+<button onclick="printThermal()">🖨 Print</button>
 </div>
   
 <div class="footer-print">
@@ -374,6 +351,40 @@ ${labelSisa.innerText.toUpperCase()} : Rp ${sisaEl.innerText}
 Terima kasih 🙏`;
 
   window.open('https://wa.me/?text=' + encodeURIComponent(text));
+}
+
+function printThermal(){
+  let items = '';
+  [...tabel.rows].forEach((tr,i)=>{
+    if(i===0) return;
+    items +=
+`${i}. ${tr.cells[1].firstChild.value}
+   ${tr.dataset.qty} x ${rupiah(tr.dataset.harga)}
+   = Rp ${tr.cells[4].innerText}
+`;
+  });
+
+  const text =
+`ZALTA STORE
+Barahan RT 05 RW 02 Tarub
+Tawangharjo, Grobogan
+WA: 08816575574
+------------------------------
+Tanggal : ${new Date().toLocaleDateString('id-ID')}
+Jam     : ${new Date().toLocaleTimeString('id-ID')}
+------------------------------
+${items}------------------------------
+TOTAL : Rp ${grandEl.innerText}
+TF    : Rp ${tfEl.value || 0}
+${labelSisa.innerText.toUpperCase()} : Rp ${sisaEl.innerText}
+------------------------------
+Terima kasih
+Barang tidak dapat
+dikembalikan
+`;
+
+  document.getElementById('thermalText').innerText = text;
+  window.print();
 }
 
 setInterval(()=>document.getElementById('datetime').innerText=new Date().toLocaleString('id-ID'),1000);
