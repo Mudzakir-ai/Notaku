@@ -223,7 +223,7 @@ WA: 08816575574 / 081476698677<br>
 
 <div class="actions">
 <button onclick="shareWA()">📤 Share WA</button>
-<button onclick="printThermal()">🖨 Print</button>
+<div id="thermalText" style="display:none; white-space:pre;"></div>
 </div>
   
 </div>
@@ -347,10 +347,12 @@ Terima kasih 🙏`;
 }
 
 function printThermal(){
+  alert('PRINT JALAN');
+
   let items = '';
   [...tabel.rows].forEach((tr,i)=>{
     if(i===0) return;
-    items += `${i}. ${tr.cells[1].firstChild.value} (${tr.dataset.qty} x ${rupiah(tr.dataset.harga)} = Rp ${tr.cells[4].innerText}\n`;
+    items += `${i}. ${tr.cells[1].firstChild.value} (${tr.dataset.qty} x ${rupiah(tr.dataset.harga)} = Rp ${tr.cells[4].innerText} `;
   });
 
   const text =
