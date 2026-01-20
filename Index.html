@@ -231,6 +231,7 @@ WA: 08816575574 / 081476698677<br>
 <div class="actions">
 <button onclick="shareWA()">📤 Share WA</button>
 <button type="button" onclick="printThermal()">🖨 Print</button>
+<button type="button" onclick="printESC()">🖨 Auto Print</button>
 </div>
 
 <div id="thermalText" style="display:none; white-space:pre;"></div>
@@ -364,7 +365,7 @@ function printThermal(){
    ${tr.dataset.qty} x ${rupiah(tr.dataset.harga)}
    = Rp ${tr.cells[4].innerText}
 `;
-
+  });
   const text =
 `ZALTA STORE
 Barahan RT 05 RW 02 Tarub
@@ -387,6 +388,99 @@ dikembalikan
   document.getElementById('thermalText');
   el.innerText = text;
   window.print();
+}
+
+let escDevice = null;
+let escServer = null;
+let escService = null;
+let escChar = null;
+
+// UUID standar printer thermal Bluetooth
+const PRINTER_UUIDS = [
+  { service:'0000ffe0-0000-1000-8000-00805f9b34fb', char:'0000ffe1-0000-1000-8000-00805f9b34fb' },
+  { service:'000018f0-0000-1000-8000-00805f9b34fb', char:'00002af1-0000-1000-8000-00805f9b34fb' }
+];
+
+async function connectPrinter(auto = false){
+  if(auto && escDevice?.gatt?.connected) return;
+
+  escDevice = await navigator.bluetooth.requestDevice({
+    acceptAllDevices: true,
+    optionalServices: PRINTER_UUIDS.map(u => u.service)
+  });
+
+  escDevice.addEventListener('gattserverdisconnected', () => {
+    console.log('Printer disconnected → reconnecting...');
+    setTimeout(() => connectPrinter(true), 1500);
+  });
+
+  escServer = await escDevice.gatt.connect();
+
+  for(const u of PRINTER_UUIDS){
+    try{
+      escService = await escServer.getPrimaryService(u.service);
+      escChar = await escService.getCharacteristic(u.char);
+      console.log('Printer connected');
+      return;
+    }catch(e){}
+  }
+
+  throw 'Printer ESC/POS tidak dikenali';
+}
+
+function enc(txt){
+  return new TextEncoder().encode(txt);
+}
+
+async function send(txt){
+  if(!escChar) await connectPrinter();
+  await escChar.writeValue(enc(txt));
+}
+
+async function write(data){
+  await characteristic.writeValue(data);
+}
+
+async function printESC(){
+  try{
+    if(!escChar) await connectPrinter(true);
+
+    let items='';
+    [...tabel.rows].forEach((tr,i)=>{
+      if(i===0) return;
+      items+=
+`${i}. ${tr.cells[1].firstChild.value}
+${tr.dataset.qty} x ${rupiah(tr.dataset.harga)}
+= Rp ${tr.cells[4].innerText}
+`;
+    });
+
+    const text =
+    await send(`\x1B\x40'); // init
+    await send(`ZALTA STORE\n');
+    await send('Barahan RT 05 RW 02 Tarub\n');
+    await send('Tawangharjo, Grobogan\n');
+    await send('HP/WA: 08816575574 / 081476698677\n');
+    await send('------------------------------\n');
+    await send('Tanggal : ${new Date().toLocaleDateString('id-ID')}\n');
+    await send('Jam     : ${new Date().toLocaleTimeString('id-ID')}\n');
+    await send('------------------------------
+    await send('${items}\n');
+    await send('------------------------------\n');
+    await send('TOTAL : Rp ${grandEl.innerText}\n');
+    await send('TF    : Rp ${tfEl.value || 0}\n');
+    await send('${labelSisa.innerText.toUpperCase()} : Rp ${sisaEl.innerText}\n');
+    await send('------------------------------\n');
+    await send('Terima kasih\n\n');
+
+    await send('\x1D\x56\x01`;)
+
+    await write(encoder(text));
+
+  }catch(e){
+    alert('Printer belum terhubung / Bluetooth mati');
+    console.error(e);
+  }
 }
 
 setInterval(()=>document.getElementById('datetime').innerText=new Date().toLocaleString('id-ID'),1000);
