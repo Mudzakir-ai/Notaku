@@ -134,25 +134,39 @@ button:active{
 /* ===== PRINT ===== */
 @media print{
   body{
-    background:#fff;
-    padding:0;
-    font-family:"Courier New", monospace;
-    font-size:11px;
+    font-family: "Courier New", monospace;
+    font-size: 11px;
   }
-  .card,.actions,input,button{display:none!important}
-  .container{max-width:100%}
+
   table th:nth-child(1),
   table td:nth-child(1),
   table th:nth-child(6),
   table td:nth-child(6){
     display:none;
   }
-  table, th, td{border:none}
-  h2{font-size:16px}
-  h3{font-size:12px}
-}
 
-@page{size:80mm auto;margin:3mm}
+  h2{font-size:16px;margin:2px 0}
+  h3{font-size:12px;margin:4px 0}
+
+  .header{
+    font-size:10px;
+  }
+
+  table{
+    border:none;
+  }
+
+  td, th{
+    border:none;
+    padding:2px 0;
+  }
+
+  .footer-print{
+    text-align:center;
+    margin-top:8px;
+    font-size:10px;
+  }
+}
 
 /* ===== DESKTOP ===== */
 @media(min-width:768px){
@@ -236,7 +250,7 @@ WA: 08816575574 / 081476698677<br>
 </div>
   
 <div class="footer-print">
-------------------------------<br>
+--------------------------------<br>
 Terima kasih 🙏<br>
 Barang yang sudah dibeli<br>
 tidak dapat dikembalikan
