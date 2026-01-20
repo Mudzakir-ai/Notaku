@@ -350,11 +350,7 @@ function printThermal(){
   let items = '';
   [...tabel.rows].forEach((tr,i)=>{
     if(i===0) return;
-    items +=
-`${i}. ${tr.cells[1].firstChild.value}
-   ${tr.dataset.qty} x ${rupiah(tr.dataset.harga)}
-   = Rp ${tr.cells[4].innerText}
-`;
+    items += `${i}. ${tr.cells[1].firstChild.value} (${tr.dataset.qty} x ${rupiah(tr.dataset.harga)} = Rp ${tr.cells[4].innerText}\n`;
   });
 
   const text =
