@@ -104,7 +104,7 @@ button{
     </div>
     <div style="flex:1">
       <label>Harga</label>
-      <input type="text" id="iHarga"
+      <input type="number" id="iHarga"
              inputmode="numeric"
              enterkeyhint="next"
              oninput="formatRupiahInput(this)">
@@ -129,7 +129,7 @@ button{
 <h3>Grand Total: Rp <span id="grand">0</span></h3>
 
 <label>Jumlah Transfer (TF)</label>
-<input type="text" id="tf"
+<input type="number" id="tf"
        inputmode="numeric"
        oninput="formatRupiahInput(this); hitungSisa()">
 
